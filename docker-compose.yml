@@ -1,0 +1,99 @@
+# Motonorte Payroll — same stack locally and on the web server (docs/03-architecture.md §1, §9, §10).
+#   Local dev:          docker compose up -d db        (then npm run dev)
+#   Local full app:     docker compose up -d           → http://localhost:3000 (APP_PORT to change)
+#   Web server:         docker compose --profile prod up -d   → https://$DOMAIN (CADDYFILE=Caddyfile)
+#   Office PC (LAN):    docker compose --profile prod up -d   → https://<this PC's IP> (CADDYFILE=Caddyfile.office)
+#                       docs/runbook-office.md
+name: motonorte-payroll
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set in .env}
+      TZ: Asia/Manila
+    ports:
+      - "127.0.0.1:${DB_PORT:-5434}:5432"   # host only, never the LAN/internet (OPS-6)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      retries: 20
+
+  # One-shot: applies pending migrations with the OWNER credentials, then exits. The app never holds them.
+  migrate:
+    build: .
+    image: ${COMPOSE_PROJECT_NAME:-motonorte-payroll}-app:latest   # per project: office never runs a dev build
+    command: ["node", "db/migrate.ts"]
+    environment:
+      DATABASE_URL_OWNER: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+
+  app:
+    image: ${COMPOSE_PROJECT_NAME:-motonorte-payroll}-app:latest
+    pull_policy: never   # built locally by the migrate service; never fetched from a registry
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://app_user:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      TRUST_PROXY: ${TRUST_PROXY:-0}   # 1 only on the server behind Caddy (sets the real client IP); 0 locally
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+    ports:
+      - "127.0.0.1:${APP_PORT:-3000}:3000"   # host only; on the server, Caddy is the public entry
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/login >/dev/null || exit 1"]
+      interval: 15s
+      retries: 10
+
+  caddy:
+    image: caddy:2-alpine
+    profiles: [prod]
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-}   # compose interpolates every profile, so the "required" check lives in the entrypoint below
+    entrypoint: ["/bin/sh", "-c", "[ -n \"$$DOMAIN\" ] || { echo 'DOMAIN is not set in .env - refusing to start' >&2; exit 1; }; exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"]
+    ports:
+      - "${HTTP_BIND:-80}:80"
+      - "${HTTPS_BIND:-443}:443"
+    volumes:
+      - ./${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app: { condition: service_healthy }
+
+  backup:
+    build: { context: ./db, dockerfile: Dockerfile.backup }
+    image: ${COMPOSE_PROJECT_NAME:-motonorte-payroll}-backup:latest
+    profiles: [prod]
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      AGE_RECIPIENT: ${AGE_RECIPIENT:-}   # public key (age1…); private key stays offline with the Owner
+      TZ: Asia/Manila
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 23 * * *}   # cron, Manila time; office PC: "45 17 * * *" (machine must be on)
+    volumes:
+      - ${BACKUP_DIR:-./backups}:/backups   # stays on this machine (owner-only files)
+      - ${OFFSITE_DIR:-./offsite}:/offsite   # the only folder that may leave this machine (encrypted copies)
+      - ./db/backup.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "-c", "echo \"$$BACKUP_SCHEDULE /bin/sh /backup.sh >> /backups/backup.log 2>&1\" | crontab - && exec crond -f -l 8"]
+    depends_on:
+      db: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

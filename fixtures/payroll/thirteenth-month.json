@@ -1,0 +1,19 @@
+{
+  "_readme": "13th month = round_half_up(sum of basic over locked runs whose Sunday payday is in the year / 12). OT, incentives, allowances excluded. Rules PR-080, PR-011.",
+  "cases": [
+    {
+      "id": "T01", "name": "Only basic counts; run paid 2027-01-03 belongs to 2027", "rules": ["PR-080", "PR-011"],
+      "input": {
+        "year": 2026,
+        "emp": "M001",
+        "runs": [
+          { "payday": "2026-01-04", "basic": 390000, "ot": 20313, "incentive": 30000, "allowances": 0 },
+          { "payday": "2026-06-07", "basic": 390000, "ot": 0, "incentive": 45000, "allowances": 20000 },
+          { "payday": "2026-12-27", "basic": 325000, "ot": 0, "incentive": 0, "allowances": 0 },
+          { "payday": "2027-01-03", "basic": 390000, "ot": 0, "incentive": 15000, "allowances": 0 }
+        ]
+      },
+      "expected": { "thirteenth": 92083 }
+    }
+  ]
+}

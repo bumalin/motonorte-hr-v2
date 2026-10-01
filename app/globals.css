@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+/* MotoNorte theme — brand spec: red #E32212, black, light gray #D7D7D7, white; "a dark brand" → dark is the default.
+   Every color is a role token with a dark and a light value; text pairs checked ≥ 4.5:1 in both themes.
+   The theme is chosen by <html data-theme="dark|light"> (cookie mn_theme, set by the header switch). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --color-brand-50: var(--brand-50);      /* selected/active background */
+  --color-brand-600: var(--brand);        /* buttons, focus ring, accents (white text on it: 4.66:1) */
+  --color-brand-700: var(--brand-text);   /* links and red text on surfaces */
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-danger-solid: #b91c1c;   /* solid buttons with white text, both themes (6.47:1) */
+  --color-success-solid: #15803d;  /* (5.02:1) */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-display: var(--font-barlow), var(--font-inter), ui-sans-serif, sans-serif;
+  --radius-md: 0.375rem;
+}
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --brand: #e32212;
+  --brand-text: #ff5a47;
+  --brand-50: #2a0b08;
+  --page: #000000;
+  --surface: #141414;
+  --surface-2: #1f1f1f;
+  --border: #2e2e2e;
+  --text: #f5f5f5;
+  --text-muted: #b5b5b5;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #60a5fa;
+  /* chart series (dataviz reference, dark steps; validated on #141414) + chrome */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --chart-grid: #2c2c2a;
+  --chart-axis: #4a4a47;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --brand: #e32212;
+  --brand-text: #b8170a;
+  --brand-50: #fdeceb;
+  --page: #f4f4f4;
+  --surface: #ffffff;
+  --surface-2: #efefef;
+  --border: #d7d7d7;
+  --text: #0a0a0a;
+  --text-muted: #4b4b4b;
+  --success: #166534;
+  --warning: #92400e;
+  --danger: #b91c1c;
+  --info: #1d4ed8;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+/* Condensed uppercase headings — the MotoNorte headline treatment */
+h1, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+h1 { text-transform: uppercase; }
+
+/* Form controls follow the theme. Native dropdown lists take their colors from the <option>s, so options get the
+   surface/text pair explicitly (unselected options were white-on-white in dark mode on Windows). Base layer, so
+   utility classes on a control still win. */
+@layer base {
+  input, select, textarea {
+    background-color: var(--surface);
+    color: var(--text);
+  }
+  option, optgroup {
+    background-color: var(--surface);
+    color: var(--text);
+  }
+  option:checked {
+    background-color: var(--brand-50);
+    color: var(--text);
+  }
+  option:disabled {
+    color: var(--text-muted);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Payslips (S-09): only the slips print, one A4 page each — always on white paper, whatever the screen theme */
+@page { size: A4; margin: 12mm; }
+@media print {
+  :root, [data-theme] {
+    color-scheme: light;
+    --page: #ffffff; --surface: #ffffff; --surface-2: #ffffff; --border: #d7d7d7;
+    --text: #000000; --text-muted: #333333; --brand-text: #b8170a; --warning: #92400e;
+  }
+  body { background: white; }
+  aside, .app-header, .no-print { display: none !important; }
+  main { padding: 0 !important; }
+  .payslip { border: 0; border-radius: 0; margin: 0; padding: 0; max-width: none; break-after: page; }
+  .payslip:last-child { break-after: auto; }
+}

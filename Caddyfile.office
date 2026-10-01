@@ -1,0 +1,20 @@
+# Office-network mode (the app runs on the office PC; no internet exposure).
+# {$DOMAIN} is this PC's fixed LAN address, e.g. 192.168.50.241. Caddy's own private CA issues the certificate;
+# install its root certificate once on each staff PC (docs/runbook-office.md §5).
+{
+	# Browsers send no SNI when the address is an IP; without this the TLS handshake fails (review TASK-029).
+	default_sni {$DOMAIN}
+}
+
+{$DOMAIN} {
+	tls internal
+	encode zstd gzip
+	reverse_proxy app:3000
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

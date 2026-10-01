@@ -1,0 +1,4 @@
+# Backup job image: postgres client + age for encrypted off-machine copies (TASK-025).
+# Built once (needs internet at build time only); runs nightly via crond inside the container.
+FROM postgres:17-alpine
+RUN apk add --no-cache age

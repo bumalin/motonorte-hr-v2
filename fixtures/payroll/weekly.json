@@ -1,0 +1,1490 @@
+{
+  "_readme": "Golden cases for the weekly pay engine. Amounts in centavos (65000 = PHP 650.00). Period 2026-10-05 (Mon) to 2026-10-11 (Sun, payday). attendance.days = 7 chars Mon..Sun: F full, H half, A not worked, R rest day, '-' not employed, '.' missing entry. ot = minutes per day Mon..Sun (omitted = all 0). Rules: docs/02-payroll-rules.md",
+  "defaults": {
+    "period_start": "2026-10-05",
+    "settings": {
+      "rest_day_worked_multiplier": 1.0,
+      "holiday_worked_multiplier": 1.0,
+      "holiday_unworked_multiplier": 0.0,
+      "ot_multiplier": 1.25
+    },
+    "catalog": [
+      {
+        "code": "TBC",
+        "name": "Throttle Body Cleaning",
+        "amounts": [
+          {
+            "from": "2026-01-01",
+            "amount": 15000
+          }
+        ]
+      },
+      {
+        "code": "CHAIN",
+        "name": "Chain Clean & Adjust (sample)",
+        "amounts": [
+          {
+            "from": "2026-01-01",
+            "amount": 10000
+          }
+        ]
+      }
+    ],
+    "employees": {
+      "S001": {
+        "position": "staff",
+        "rest_day": "sun",
+        "hire_date": "2025-01-01",
+        "rates": [
+          {
+            "from": "2025-01-01",
+            "daily_rate": 55000
+          }
+        ]
+      },
+      "S002": {
+        "position": "staff",
+        "rest_day": "sun",
+        "hire_date": "2025-01-01",
+        "rates": [
+          {
+            "from": "2025-01-01",
+            "daily_rate": 55000
+          }
+        ]
+      },
+      "S003": {
+        "position": "staff",
+        "rest_day": "sun",
+        "hire_date": "2026-10-07",
+        "rates": [
+          {
+            "from": "2026-10-07",
+            "daily_rate": 55000
+          }
+        ]
+      },
+      "M001": {
+        "position": "mechanic",
+        "rest_day": "sun",
+        "hire_date": "2025-01-01",
+        "rates": [
+          {
+            "from": "2025-01-01",
+            "daily_rate": 65000
+          }
+        ]
+      },
+      "M002": {
+        "position": "mechanic",
+        "rest_day": "sun",
+        "hire_date": "2025-01-01",
+        "rates": [
+          {
+            "from": "2025-01-01",
+            "daily_rate": 70000
+          }
+        ]
+      },
+      "M003": {
+        "position": "mechanic",
+        "rest_day": "sun",
+        "hire_date": "2025-01-01",
+        "rates": [
+          {
+            "from": "2025-01-01",
+            "daily_rate": 60000
+          }
+        ]
+      },
+      "T001": {
+        "position": "technician",
+        "rest_day": "sun",
+        "hire_date": "2025-01-01",
+        "rates": [
+          {
+            "from": "2025-01-01",
+            "daily_rate": 75000
+          }
+        ]
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "F01",
+      "name": "Staff full week",
+      "rules": [
+        "PR-031"
+      ],
+      "input": {
+        "attendance": {
+          "S001": {
+            "days": "FFFFFFR"
+          }
+        }
+      },
+      "expected": {
+        "S001": {
+          "basic": 330000,
+          "base": 330000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 330000,
+          "net": 330000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F02",
+      "name": "Half day",
+      "rules": [
+        "PR-031"
+      ],
+      "input": {
+        "attendance": {
+          "S001": {
+            "days": "FFHFFFR"
+          }
+        }
+      },
+      "expected": {
+        "S001": {
+          "basic": 302500,
+          "base": 302500,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 302500,
+          "net": 302500,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F03",
+      "name": "Absent day",
+      "rules": [
+        "PR-031"
+      ],
+      "input": {
+        "attendance": {
+          "S001": {
+            "days": "FAFFFFR"
+          }
+        }
+      },
+      "expected": {
+        "S001": {
+          "basic": 275000,
+          "base": 275000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 275000,
+          "net": 275000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F04",
+      "name": "Rest day worked at regular rate",
+      "rules": [
+        "PR-030",
+        "PR-031"
+      ],
+      "input": {
+        "attendance": {
+          "S001": {
+            "days": "FFFFFFF"
+          }
+        }
+      },
+      "expected": {
+        "S001": {
+          "basic": 385000,
+          "base": 385000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 385000,
+          "net": 385000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F05",
+      "name": "Overtime rounding (2h at PHP 650/day = 203.125 -> 203.13)",
+      "rules": [
+        "PR-040",
+        "PR-002"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR",
+            "ot": [
+              120,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "expected": {
+        "M001": {
+          "basic": 390000,
+          "base": 390000,
+          "ot": 20313,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 410313,
+          "net": 410313,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F06",
+      "name": "Single mechanic gets whole pool",
+      "rules": [
+        "PR-051",
+        "PR-052",
+        "PR-053"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-06",
+            "job": "TBC",
+            "qty": 2
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 390000,
+          "base": 390000,
+          "ot": 0,
+          "incentive": 30000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 420000,
+          "net": 420000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F07",
+      "name": "Pool split 3 ways, multiple job types (PHP 600 / 3)",
+      "rules": [
+        "PR-051",
+        "PR-053"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR"
+          },
+          "M002": {
+            "days": "FFFFFFR"
+          },
+          "M003": {
+            "days": "FFFFFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-06",
+            "job": "TBC",
+            "qty": 2
+          },
+          {
+            "date": "2026-10-06",
+            "job": "CHAIN",
+            "qty": 3
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 390000,
+          "base": 390000,
+          "ot": 0,
+          "incentive": 20000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 410000,
+          "net": 410000,
+          "carry_out": 0
+        },
+        "M002": {
+          "basic": 420000,
+          "base": 420000,
+          "ot": 0,
+          "incentive": 20000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 440000,
+          "net": 440000,
+          "carry_out": 0
+        },
+        "M003": {
+          "basic": 360000,
+          "base": 360000,
+          "ot": 0,
+          "incentive": 20000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 380000,
+          "net": 380000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F08",
+      "name": "Half-day mechanic excluded from pool",
+      "rules": [
+        "PR-052"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR"
+          },
+          "M002": {
+            "days": "FFFFFFR"
+          },
+          "M003": {
+            "days": "FHFFFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-06",
+            "job": "TBC",
+            "qty": 2
+          },
+          {
+            "date": "2026-10-06",
+            "job": "CHAIN",
+            "qty": 3
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 390000,
+          "base": 390000,
+          "ot": 0,
+          "incentive": 30000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 420000,
+          "net": 420000,
+          "carry_out": 0
+        },
+        "M002": {
+          "basic": 420000,
+          "base": 420000,
+          "ot": 0,
+          "incentive": 30000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 450000,
+          "net": 450000,
+          "carry_out": 0
+        },
+        "M003": {
+          "basic": 330000,
+          "base": 330000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 330000,
+          "net": 330000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F09",
+      "name": "Staff and technician excluded from pool",
+      "rules": [
+        "PR-052"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR"
+          },
+          "S001": {
+            "days": "FFFFFFR"
+          },
+          "T001": {
+            "days": "FFFFFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-07",
+            "job": "TBC",
+            "qty": 3
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 390000,
+          "base": 390000,
+          "ot": 0,
+          "incentive": 45000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 435000,
+          "net": 435000,
+          "carry_out": 0
+        },
+        "S001": {
+          "basic": 330000,
+          "base": 330000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 330000,
+          "net": 330000,
+          "carry_out": 0
+        },
+        "T001": {
+          "basic": 450000,
+          "base": 450000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 450000,
+          "net": 450000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F10",
+      "name": "Remainder centavo goes to lowest employee code (PHP 100 / 3)",
+      "rules": [
+        "PR-053"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR"
+          },
+          "M002": {
+            "days": "FFFFFFR"
+          },
+          "M003": {
+            "days": "FFFFFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-05",
+            "job": "CHAIN",
+            "qty": 1
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 390000,
+          "base": 390000,
+          "ot": 0,
+          "incentive": 3334,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 393334,
+          "net": 393334,
+          "carry_out": 0
+        },
+        "M002": {
+          "basic": 420000,
+          "base": 420000,
+          "ot": 0,
+          "incentive": 3333,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 423333,
+          "net": 423333,
+          "carry_out": 0
+        },
+        "M003": {
+          "basic": 360000,
+          "base": 360000,
+          "ot": 0,
+          "incentive": 3333,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 363333,
+          "net": 363333,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F11",
+      "name": "Jobs logged but no full-day mechanic -> error",
+      "rules": [
+        "PR-054"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FFFHFFR"
+          },
+          "M002": {
+            "days": "FFFAFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-08",
+            "job": "TBC",
+            "qty": 1
+          }
+        ]
+      },
+      "expected": {
+        "error": {
+          "code": "NO_ELIGIBLE_MECHANIC",
+          "date": "2026-10-08"
+        }
+      }
+    },
+    {
+      "id": "F12",
+      "name": "Different pools on different days",
+      "rules": [
+        "PR-051",
+        "PR-052",
+        "PR-053"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR"
+          },
+          "M002": {
+            "days": "FAFFFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-05",
+            "job": "TBC",
+            "qty": 1
+          },
+          {
+            "date": "2026-10-06",
+            "job": "CHAIN",
+            "qty": 2
+          },
+          {
+            "date": "2026-10-10",
+            "job": "TBC",
+            "qty": 1
+          },
+          {
+            "date": "2026-10-10",
+            "job": "CHAIN",
+            "qty": 1
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 390000,
+          "base": 390000,
+          "ot": 0,
+          "incentive": 40000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 430000,
+          "net": 430000,
+          "carry_out": 0
+        },
+        "M002": {
+          "basic": 350000,
+          "base": 350000,
+          "ot": 0,
+          "incentive": 20000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 370000,
+          "net": 370000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F13",
+      "name": "Mechanic working his rest day shares that day's pool",
+      "rules": [
+        "PR-052",
+        "PR-030"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFF"
+          },
+          "M002": {
+            "days": "FFFFFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-11",
+            "job": "TBC",
+            "qty": 2
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 455000,
+          "base": 455000,
+          "ot": 0,
+          "incentive": 30000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 485000,
+          "net": 485000,
+          "carry_out": 0
+        },
+        "M002": {
+          "basic": 420000,
+          "base": 420000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 420000,
+          "net": 420000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F14",
+      "name": "Allowance and deduction",
+      "rules": [
+        "PR-060",
+        "PR-061"
+      ],
+      "input": {
+        "attendance": {
+          "S001": {
+            "days": "FFFFFFR"
+          }
+        },
+        "adjustments": [
+          {
+            "emp": "S001",
+            "kind": "allowance",
+            "type": "meal",
+            "amount": 20000,
+            "reason": "Weekend inventory"
+          },
+          {
+            "emp": "S001",
+            "kind": "deduction",
+            "type": "cash_advance",
+            "amount": 50000,
+            "reason": "CA 2026-10-01"
+          }
+        ]
+      },
+      "expected": {
+        "S001": {
+          "basic": 330000,
+          "base": 330000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 20000,
+          "deductions": 50000,
+          "carried_in": 0,
+          "gross": 350000,
+          "net": 300000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F15",
+      "name": "Clawback exceeds pay -> net 0, balance carries",
+      "rules": [
+        "PR-061"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FAAAAAR"
+          }
+        },
+        "adjustments": [
+          {
+            "emp": "M001",
+            "kind": "deduction",
+            "type": "clawback",
+            "amount": 80000,
+            "reason": "Comeback WO-1234"
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 65000,
+          "base": 65000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 80000,
+          "carried_in": 0,
+          "gross": 65000,
+          "net": 0,
+          "carry_out": 15000
+        }
+      }
+    },
+    {
+      "id": "F16",
+      "name": "Carried-in balance deducted next week",
+      "rules": [
+        "PR-061"
+      ],
+      "input": {
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR"
+          }
+        },
+        "carried_in": {
+          "M001": 15000
+        }
+      },
+      "expected": {
+        "M001": {
+          "basic": 390000,
+          "base": 390000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 15000,
+          "gross": 390000,
+          "net": 375000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F17",
+      "name": "Daily rate changes Wednesday (650 -> 700)",
+      "rules": [
+        "PR-020"
+      ],
+      "input": {
+        "employees": {
+          "M001": {
+            "position": "mechanic",
+            "rest_day": "sun",
+            "hire_date": "2025-01-01",
+            "rates": [
+              {
+                "from": "2025-01-01",
+                "daily_rate": 65000
+              },
+              {
+                "from": "2026-10-07",
+                "daily_rate": 70000
+              }
+            ]
+          }
+        },
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR"
+          }
+        }
+      },
+      "expected": {
+        "M001": {
+          "basic": 410000,
+          "base": 410000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 410000,
+          "net": 410000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F18",
+      "name": "Incentive amount changes Wednesday (150 -> 180)",
+      "rules": [
+        "PR-050"
+      ],
+      "input": {
+        "catalog": [
+          {
+            "code": "TBC",
+            "name": "Throttle Body Cleaning",
+            "amounts": [
+              {
+                "from": "2026-01-01",
+                "amount": 15000
+              },
+              {
+                "from": "2026-10-07",
+                "amount": 18000
+              }
+            ]
+          }
+        ],
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-06",
+            "job": "TBC",
+            "qty": 1
+          },
+          {
+            "date": "2026-10-08",
+            "job": "TBC",
+            "qty": 1
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 390000,
+          "base": 390000,
+          "ot": 0,
+          "incentive": 33000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 423000,
+          "net": 423000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F19",
+      "name": "Holiday worked = regular pay, unworked = no pay (current settings)",
+      "rules": [
+        "PR-030",
+        "PR-031",
+        "PR-032"
+      ],
+      "input": {
+        "holidays": [
+          {
+            "date": "2026-10-08",
+            "type": "regular",
+            "name": "Test holiday"
+          }
+        ],
+        "attendance": {
+          "S001": {
+            "days": "FFFFFFR"
+          },
+          "S002": {
+            "days": "FFFAFFR"
+          }
+        }
+      },
+      "expected": {
+        "S001": {
+          "basic": 330000,
+          "base": 330000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 330000,
+          "net": 330000,
+          "carry_out": 0
+        },
+        "S002": {
+          "basic": 275000,
+          "base": 275000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 275000,
+          "net": 275000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F20",
+      "name": "Legal multipliers if Owner changes settings (rest 1.3, holiday 2.0 / 1.0)",
+      "rules": [
+        "PR-030",
+        "PR-031",
+        "PR-032"
+      ],
+      "input": {
+        "settings": {
+          "rest_day_worked_multiplier": 1.3,
+          "holiday_worked_multiplier": 2.0,
+          "holiday_unworked_multiplier": 1.0,
+          "ot_multiplier": 1.25
+        },
+        "holidays": [
+          {
+            "date": "2026-10-08",
+            "type": "regular",
+            "name": "Test holiday"
+          }
+        ],
+        "attendance": {
+          "S001": {
+            "days": "FFFFFFF"
+          },
+          "S002": {
+            "days": "FFFAFFR"
+          }
+        }
+      },
+      "expected": {
+        "S001": {
+          "basic": 385000,
+          "base": 456500,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 456500,
+          "net": 456500,
+          "carry_out": 0
+        },
+        "S002": {
+          "basic": 275000,
+          "base": 330000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 330000,
+          "net": 330000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F21",
+      "name": "New hire starts Wednesday",
+      "rules": [
+        "PR-022",
+        "PR-023"
+      ],
+      "input": {
+        "attendance": {
+          "S003": {
+            "days": "--FFFFR"
+          }
+        }
+      },
+      "expected": {
+        "S003": {
+          "basic": 220000,
+          "base": 220000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 220000,
+          "net": 220000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F22",
+      "name": "Missing attendance entry -> error",
+      "rules": [
+        "PR-023"
+      ],
+      "input": {
+        "attendance": {
+          "S001": {
+            "days": "FFF.FFR"
+          }
+        }
+      },
+      "expected": {
+        "error": {
+          "code": "MISSING_ATTENDANCE",
+          "emp": "S001",
+          "date": "2026-10-08"
+        }
+      }
+    },
+    {
+      "id": "F23",
+      "name": "OT entered on a half day -> error",
+      "rules": [
+        "PR-041"
+      ],
+      "input": {
+        "attendance": {
+          "S001": {
+            "days": "FFHFFFR",
+            "ot": [
+              0,
+              0,
+              60,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "expected": {
+        "error": {
+          "code": "INVALID_OT",
+          "emp": "S001",
+          "date": "2026-10-07"
+        }
+      }
+    },
+    {
+      "id": "F24",
+      "name": "Daily allowance PHP 100: full, half (half), absent, rest; OT day still one allowance; not in basic",
+      "rules": [
+        "PR-062",
+        "PR-032"
+      ],
+      "input": {
+        "employees": {
+          "M001": {
+            "position": "mechanic",
+            "rest_day": "sun",
+            "hire_date": "2025-01-01",
+            "rates": [
+              {
+                "from": "2025-01-01",
+                "daily_rate": 65000,
+                "daily_allowance": 10000
+              }
+            ]
+          }
+        },
+        "attendance": {
+          "M001": {
+            "days": "FHAFFFR",
+            "ot": [
+              60,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "expected": {
+        "M001": {
+          "basic": 292500,
+          "base": 292500,
+          "ot": 10156,
+          "incentive": 0,
+          "allowances": 45000,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 347656,
+          "net": 347656,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F25",
+      "name": "Day off (R) on a Wednesday is allowed; working the usual Sunday rest day pays normally",
+      "rules": [
+        "PR-021",
+        "PR-022",
+        "PR-062"
+      ],
+      "input": {
+        "employees": {
+          "S001": {
+            "position": "staff",
+            "rest_day": "sun",
+            "hire_date": "2025-01-01",
+            "rates": [
+              {
+                "from": "2025-01-01",
+                "daily_rate": 55000,
+                "daily_allowance": 5000
+              }
+            ]
+          }
+        },
+        "attendance": {
+          "S001": {
+            "days": "FFRFFFF"
+          }
+        }
+      },
+      "expected": {
+        "S001": {
+          "basic": 330000,
+          "base": 330000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 30000,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 360000,
+          "net": 360000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F26",
+      "name": "Rate and daily allowance change together on Wednesday (700/80 -> 720/120)",
+      "rules": [
+        "PR-020",
+        "PR-062"
+      ],
+      "input": {
+        "employees": {
+          "M002": {
+            "position": "mechanic",
+            "rest_day": "sun",
+            "hire_date": "2025-01-01",
+            "rates": [
+              {
+                "from": "2025-01-01",
+                "daily_rate": 70000,
+                "daily_allowance": 8000
+              },
+              {
+                "from": "2026-10-07",
+                "daily_rate": 72000,
+                "daily_allowance": 12000
+              }
+            ]
+          }
+        },
+        "attendance": {
+          "M002": {
+            "days": "FFFFFFR"
+          }
+        }
+      },
+      "expected": {
+        "M002": {
+          "basic": 428000,
+          "base": 428000,
+          "ot": 0,
+          "incentive": 0,
+          "allowances": 64000,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 492000,
+          "net": 492000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F27",
+      "name": "A job set to one mechanic goes 100% to them, even on a half day; the pool excludes it and splits among full-day mechanics",
+      "rules": [
+        "PR-052",
+        "PR-053",
+        "PR-055"
+      ],
+      "input": {
+        "catalog": [
+          {
+            "code": "TBC",
+            "name": "Throttle Body Cleaning",
+            "amounts": [
+              {
+                "from": "2026-01-01",
+                "amount": 15000
+              }
+            ]
+          },
+          {
+            "code": "CHAIN",
+            "name": "Chain Clean & Adjust (sample)",
+            "amounts": [
+              {
+                "from": "2026-01-01",
+                "amount": 10000
+              }
+            ]
+          },
+          {
+            "code": "RSS1",
+            "name": "Rear Suspension Servicing (Single)",
+            "amounts": [
+              {
+                "from": "2026-01-01",
+                "amount": 25000
+              }
+            ]
+          },
+          {
+            "code": "PMS",
+            "name": "PMS Service",
+            "amounts": [
+              {
+                "from": "2026-01-01",
+                "amount": 30000
+              }
+            ]
+          }
+        ],
+        "attendance": {
+          "M001": {
+            "days": "FFFFFFR"
+          },
+          "M002": {
+            "days": "FHFFFFR"
+          },
+          "M003": {
+            "days": "FFFFFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-06",
+            "job": "TBC",
+            "qty": 2
+          },
+          {
+            "date": "2026-10-06",
+            "job": "RSS1",
+            "qty": 1,
+            "by": "M002"
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 390000,
+          "base": 390000,
+          "ot": 0,
+          "incentive": 15000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 405000,
+          "net": 405000,
+          "carry_out": 0
+        },
+        "M002": {
+          "basic": 385000,
+          "base": 385000,
+          "ot": 0,
+          "incentive": 25000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 410000,
+          "net": 410000,
+          "carry_out": 0
+        },
+        "M003": {
+          "basic": 360000,
+          "base": 360000,
+          "ot": 0,
+          "incentive": 15000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 375000,
+          "net": 375000,
+          "carry_out": 0
+        }
+      }
+    },
+    {
+      "id": "F28",
+      "name": "A job set to one mechanic is paid to them even on a day they were absent; they still share the pool on full days",
+      "rules": [
+        "PR-052",
+        "PR-053",
+        "PR-055"
+      ],
+      "input": {
+        "catalog": [
+          {
+            "code": "TBC",
+            "name": "Throttle Body Cleaning",
+            "amounts": [
+              {
+                "from": "2026-01-01",
+                "amount": 15000
+              }
+            ]
+          },
+          {
+            "code": "CHAIN",
+            "name": "Chain Clean & Adjust (sample)",
+            "amounts": [
+              {
+                "from": "2026-01-01",
+                "amount": 10000
+              }
+            ]
+          },
+          {
+            "code": "RSS1",
+            "name": "Rear Suspension Servicing (Single)",
+            "amounts": [
+              {
+                "from": "2026-01-01",
+                "amount": 25000
+              }
+            ]
+          },
+          {
+            "code": "PMS",
+            "name": "PMS Service",
+            "amounts": [
+              {
+                "from": "2026-01-01",
+                "amount": 30000
+              }
+            ]
+          }
+        ],
+        "attendance": {
+          "M001": {
+            "days": "FFAFFFR"
+          },
+          "M002": {
+            "days": "FFFFFFR"
+          }
+        },
+        "jobs": [
+          {
+            "date": "2026-10-06",
+            "job": "TBC",
+            "qty": 2
+          },
+          {
+            "date": "2026-10-07",
+            "job": "PMS",
+            "qty": 1,
+            "by": "M001"
+          },
+          {
+            "date": "2026-10-07",
+            "job": "TBC",
+            "qty": 1
+          }
+        ]
+      },
+      "expected": {
+        "M001": {
+          "basic": 325000,
+          "base": 325000,
+          "ot": 0,
+          "incentive": 45000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 370000,
+          "net": 370000,
+          "carry_out": 0
+        },
+        "M002": {
+          "basic": 420000,
+          "base": 420000,
+          "ot": 0,
+          "incentive": 30000,
+          "allowances": 0,
+          "deductions": 0,
+          "carried_in": 0,
+          "gross": 450000,
+          "net": 450000,
+          "carry_out": 0
+        }
+      }
+    }
+  ]
+}

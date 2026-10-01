@@ -1,0 +1,13 @@
+# Public entry on the web server (prod profile). Caddy obtains and renews the Let's Encrypt certificate for $DOMAIN.
+{$DOMAIN} {
+	encode zstd gzip
+	# Caddy ignores client-sent X-Forwarded-For (no trusted_proxies) and sets the real client IP itself (audit data).
+	reverse_proxy app:3000
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: motonorte
+          POSTGRES_USER: app_owner
+          POSTGRES_PASSWORD: ci_owner_pw
+        ports: ["5434:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app_owner -d motonorte"
+          --health-interval 5s --health-retries 20
+    env:
+      DATABASE_URL_OWNER: postgres://app_owner:ci_owner_pw@localhost:5434/motonorte
+      DATABASE_URL: postgres://app_user:ci_app_pw@localhost:5434/motonorte
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Same role db/init/01-app-user.sh creates in Docker
+      - run: psql "$DATABASE_URL_OWNER" -c "create role app_user login password 'ci_app_pw'"
+      - run: npm run db:migrate
+      - run: npm run db:seed
+      - run: npm run db:verify
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build

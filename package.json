@@ -1,0 +1,41 @@
+{
+  "name": "motonorte-payroll",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "node --env-file-if-exists=.env --test \"lib/**/*.test.ts\"",
+    "db:migrate": "node --env-file-if-exists=.env db/migrate.ts",
+    "db:seed": "node --env-file-if-exists=.env db/run-sql.ts db/seed.sql",
+    "db:verify": "node --env-file-if-exists=.env db/run-sql.ts db/tests/verify.sql",
+    "db:reset": "node --env-file-if-exists=.env db/migrate.ts --reset && npm run db:seed",
+    "create-user": "node --env-file-if-exists=.env scripts/create-user.ts",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "next": "16.3.6",
+    "postgres": "^3.4.9",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^24.19.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
