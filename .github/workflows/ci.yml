@@ -28,6 +28,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm audit --omit=dev
       # Same role db/init/01-app-user.sh creates in Docker
       - run: psql "$DATABASE_URL_OWNER" -c "create role app_user login password 'ci_app_pw'"
       - run: npm run db:migrate
