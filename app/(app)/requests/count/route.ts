@@ -1,0 +1,2 @@
+import {getSession} from "@/lib/auth/session.ts";import {withUser} from "@/lib/db/client.ts";
+export async function GET(){const u=await getSession();if(!u||u.role!=="owner"||u.accessKind!=="office")return new Response("Forbidden",{status:403});const [{count}]=await withUser(u.id,tx=>tx`select count(*)::int as count from payslip_requests where status='pending'`);return Response.json({count},{headers:{"Cache-Control":"no-store"}});}

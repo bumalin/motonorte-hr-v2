@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Fragment } from "react";
 import { requireTab } from "@/lib/auth/session.ts";
 import { withUser } from "@/lib/db/client.ts";
@@ -17,7 +18,7 @@ const LABELS: [string, string][] = [
 ];
 type Setting = { key: string; effective_from: string; value_hundredths: number };
 type Holiday = { date: string; name: string; type: string };
-type User = { id: string; email: string; full_name: string; role: string; tabs: string[]; active: boolean; last_login_at: Date | null;
+type User = { access_kind: string; id: string; email: string; full_name: string; role: string; tabs: string[]; active: boolean; last_login_at: Date | null;
   phone: string | null; address: string | null; emergency_contact: string | null; emergency_contact_phone: string | null };
 
 export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
@@ -29,7 +30,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   const { settings, holidays, users, frozen } = await withUser(user.id, async (tx) => ({
     settings: await tx<Setting[]>`select key, effective_from::text, value_hundredths from settings order by key, effective_from desc`,
     holidays: await tx<Holiday[]>`select date::text, name, type from holidays where extract(year from date) = ${year} order by date`,
-    users: isOwner ? await tx<User[]>`select id, email, full_name, role, tabs, active, last_login_at,
+    users: isOwner ? await tx<User[]>`select access_kind, id, email, full_name, role, tabs, active, last_login_at,
       phone, address, emergency_contact, emergency_contact_phone from users order by role desc, email` : [],
     frozen: (await tx<{ p: string }[]>`select period_start::text as p from payroll_runs where status in ('submitted', 'locked')`).map((r) => r.p),
   }));
@@ -38,7 +39,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
 
   return (
     <div className="max-w-4xl space-y-10">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <h1 className="text-2xl font-semibold">Pay rules &amp; holidays</h1>
+      {isOwner&&<Link href="/team" className="team-settings-link">Manage sign-in accounts &amp; tab access →</Link>}
 
       <section className="space-y-3">
         <h2 className="text-lg font-medium">Pay multipliers</h2>

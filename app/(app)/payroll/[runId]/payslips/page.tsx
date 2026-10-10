@@ -2,30 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireTab } from "@/lib/auth/session.ts";
 import { withUser } from "@/lib/db/client.ts";
-import { addDays, formatDate, formatDay, formatMoney, formatWeek, todayManila, positionLabel } from "@/lib/format.ts";
-import { describeItem, type RunItem } from "@/lib/payroll/describe.ts";
+import { addDays, formatDay, formatWeek, todayManila } from "@/lib/format.ts";
+import { type RunItem } from "@/lib/payroll/describe.ts";
 import { PrintButton } from "./print-button.tsx";
+import {PrintablePayslip} from "./printable-payslip.tsx";
+import "./print.css";
 
 // S-09 Payslips — US-034. Locked runs only; one A4 page per employee; browser "Save as PDF" (ADR-004).
-type Line = { employee_id: string; code: string; full_name: string; position: string | null; base: number; ot: number; incentive: number;
+type Line = { employee_id: string; code: string; full_name: string; position: string | null; hire_date: string; base: number; ot: number; incentive: number;
   allowances: number; deductions: number; carried_in: number; gross: number; net: number; carry_out: number };
-
-function Section({ title, items, total, negative = false }: { title: string; items: RunItem[]; total: number; negative?: boolean }) {
-  if (items.length === 0) return null;
-  return (
-    <section className="mb-3 break-inside-avoid">
-      <h3 className="mb-1 border-b border-border text-xs font-semibold uppercase tracking-wide text-text-muted">{title}</h3>
-      <table className="w-full text-[13px]">
-        <tbody>
-          {items.map((it, i) => (
-            <tr key={i}><td className="py-0.5 pr-4">{describeItem(it)}</td><td className="tabular py-0.5 text-right">{formatMoney(negative ? -it.amount : it.amount)}</td></tr>
-          ))}
-          <tr className="font-medium"><td className="pt-1">Total {title.toLowerCase()}</td><td className="tabular pt-1 text-right">{formatMoney(negative ? -total : total)}</td></tr>
-        </tbody>
-      </table>
-    </section>
-  );
-}
 
 export default async function PayslipsPage({ params, searchParams }: PageProps<"/payroll/[runId]/payslips">) {
   const user = await requireTab("payroll");
@@ -37,7 +22,7 @@ export default async function PayslipsPage({ params, searchParams }: PageProps<"
       select period_start::text, status, locked_at from payroll_runs where id = ${runId}`;
     if (!run) return null;
     const lines = await tx<Line[]>`
-      select l.employee_id, e.code, e.full_name, (select t.position from pay_terms t where t.employee_id = e.id and t.status = 'approved' and t.effective_from <= r.period_start + 6 order by t.effective_from desc limit 1) as position,
+      select l.employee_id, e.code, e.full_name, e.hire_date::text, (select t.position from pay_terms t where t.employee_id = e.id and t.status = 'approved' and t.effective_from <= r.period_start + 6 order by t.effective_from desc limit 1) as position,
         l.base, l.ot, l.incentive, l.allowances, l.deductions, l.carried_in, l.gross, l.net, l.carry_out
       from payroll_lines l join employees e on e.id = l.employee_id join payroll_runs r on r.id = l.run_id
       where l.run_id = ${runId} order by e.code`;
@@ -59,12 +44,11 @@ export default async function PayslipsPage({ params, searchParams }: PageProps<"
     );
   }
   const shown = typeof emp === "string" && emp ? lines.filter((l) => l.employee_id === emp) : lines;
-  const of = (id: string, kind: string) => items.filter((i) => i.employee_id === id && i.kind === kind);
   const payday = addDays(run.period_start, 6);
 
   return (
     <>
-      <div className="no-print mb-4 flex flex-wrap items-center gap-3">
+      <div className="print-slip-toolbar no-print mb-4 flex flex-wrap items-center gap-3">
         <Link href={`/payroll/${runId}`} className="text-sm text-brand-700 hover:underline">← Run</Link>
         <h1 className="text-xl font-semibold">Payslips · {formatWeek(run.period_start)}</h1>
         <form className="flex items-center gap-2 text-sm">
@@ -78,42 +62,6 @@ export default async function PayslipsPage({ params, searchParams }: PageProps<"
         <PrintButton />
       </div>
 
-      {shown.map((l) => (
-        <article key={l.employee_id} className="payslip mx-auto mb-6 max-w-[210mm] rounded-md border border-border bg-surface p-8">
-          <header className="mb-4 flex items-start justify-between border-b border-border pb-3">
-            <div>
-              <p className="text-lg font-semibold">Motonorte</p>
-              <p className="text-sm text-text-muted">Payslip · {formatWeek(run.period_start)} · Payday {formatDate(payday)}</p>
-            </div>
-            <div className="text-right text-sm">
-              <p className="font-medium"><span className="font-mono">{l.code}</span> · {l.full_name}</p>
-              <p className="text-text-muted">{l.position ? positionLabel(l.position) : ""}</p>
-            </div>
-          </header>
-
-          {(() => {
-            const days = rest.filter((r) => r.employee_id === l.employee_id).map((r) => formatDay(r.date));
-            return days.length > 0 && <p className="mb-3 text-sm"><span className="font-medium">Rest day{days.length > 1 ? "s" : ""}:</span> {days.join(", ")}</p>;
-          })()}
-          <Section title="Base pay" items={of(l.employee_id, "base")} total={l.base} />
-          <Section title="Overtime" items={of(l.employee_id, "ot")} total={l.ot} />
-          <Section title="Incentives" items={of(l.employee_id, "incentive")} total={l.incentive} />
-          <Section title="Allowances" items={of(l.employee_id, "allowance")} total={l.allowances} />
-          <Section title="Deductions" items={[...of(l.employee_id, "deduction"), ...of(l.employee_id, "carried_in")]} total={l.deductions + l.carried_in} negative />
-
-          <div className="mt-4 flex items-end justify-between border-t-2 border-text pt-3">
-            <div className="text-sm text-text-muted">Gross {formatMoney(l.gross)}</div>
-            <div className="text-right">
-              <p className="text-xs uppercase tracking-wide text-text-muted">Net pay</p>
-              <p className="tabular text-2xl font-bold">{formatMoney(l.net)}</p>
-            </div>
-          </div>
-          {l.carry_out > 0 && (
-            <p className="mt-2 text-sm text-warning">Deductions exceeded this week&apos;s pay. {formatMoney(l.carry_out)} carries to next payday.</p>
-          )}
-          <footer className="mt-6 text-[11px] text-text-muted">Generated from locked run on {run.locked_at ? formatDate(todayManila(run.locked_at)) : "—"}.</footer>
-        </article>
-      ))}
-    </>
+      <div className="print-slip-preview">{shown.map(l=><PrintablePayslip key={l.employee_id} line={l} period={run.period_start} payday={payday} locked={run.locked_at?todayManila(run.locked_at):payday} preparedBy={user.fullName} items={items.filter(i=>i.employee_id===l.employee_id)} restDays={rest.filter(r=>r.employee_id===l.employee_id).map(r=>formatDay(r.date))}/>)}</div>    </>
   );
 }

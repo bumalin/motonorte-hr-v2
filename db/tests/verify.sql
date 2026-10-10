@@ -77,6 +77,13 @@ select t.ok('staff can propose a rate', exists (select 1 from pay_terms where ef
 update pay_terms set status = 'approved' where effective_from = '2026-11-02';   -- RLS: silently matches 0 rows
 select t.ok('staff cannot approve a rate', (select status from pay_terms where effective_from = '2026-11-02') = 'proposed');
 
+select t.expect_fail('staff cannot insert attendance',
+  $q$ insert into attendance (employee_id,date,status) values ('00000000-0000-0000-0000-00000000a004','2026-11-02','F') $q$, 'ATTENDANCE_ADMIN_ONLY');
+select t.expect_fail('staff cannot update attendance',
+  $q$ update attendance set status='H' where date='2026-10-05' $q$, 'ATTENDANCE_ADMIN_ONLY');
+select t.expect_fail('staff cannot delete attendance',
+  $q$ delete from attendance where date='2026-10-05' $q$, 'ATTENDANCE_ADMIN_ONLY');
+select set_config('app.user_id', '00000000-0000-0000-0000-0000000000a1', false);
 update attendance set status = 'R' where employee_id = '00000000-0000-0000-0000-00000000a004' and date = '2026-10-05';
 select t.ok('R (day off) may be recorded on any day (008)',
   (select status from attendance where employee_id = '00000000-0000-0000-0000-00000000a004' and date = '2026-10-05') = 'R');
@@ -91,6 +98,8 @@ select t.expect_fail('attendance before hire date rejected',
   $q$ insert into attendance values ('00000000-0000-0000-0000-00000000a004', '2024-12-30', 'F') $q$, 'NOT_EMPLOYED');
 select t.expect_fail('staff cannot write payroll_runs directly',
   $q$ update payroll_runs set status = 'locked' $q$, 'permission denied');
+
+select set_config('app.user_id', '00000000-0000-0000-0000-0000000000a2', false);
 
 -- Draft for Oct 5–11 (F07 values for mechanics; S002 carries a balance like F15)
 select t.expect_fail('line totals must be consistent',
@@ -111,8 +120,10 @@ select t.ok('regenerate replaced items', (select count(*) from payroll_items) = 
 
 select submit_run((select id from payroll_runs where period_start = '2026-10-05'));
 select t.ok('staff submitted', (select status from payroll_runs where period_start = '2026-10-05') = 'submitted');
+select set_config('app.user_id', '00000000-0000-0000-0000-0000000000a1', false);
 select t.expect_fail('submitted week is frozen: attendance',
   $q$ update attendance set status = 'A' where date = '2026-10-06' $q$, 'PERIOD_LOCKED');
+select set_config('app.user_id', '00000000-0000-0000-0000-0000000000a2', false);
 select t.expect_fail('submitted week is frozen: job log',
   $q$ insert into job_log (date, job_id, qty) values ('2026-10-07', '00000000-0000-0000-0000-00000000b001', 1) $q$, 'PERIOD_LOCKED');
 select t.expect_fail('adjustment amounts are capped',

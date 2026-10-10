@@ -92,7 +92,7 @@ export default async function WeekPage({ params, searchParams }: PageProps<"/wee
       )}
       {locked && (
         <p role="status" className="mb-4 rounded-md border border-success/30 bg-success/5 px-4 py-2 text-sm">
-          {status === "locked" ? "This week is locked. Changes go in as adjustments on a later week."
+          {status === "locked" ? "This week is locked. An administrator can reopen the latest locked payroll run with a reason to correct attendance."
             : "Submitted for approval — this week is read-only. The Owner can send it back if changes are needed."}
         </p>
       )}
@@ -102,8 +102,9 @@ export default async function WeekPage({ params, searchParams }: PageProps<"/wee
             className={`-mb-px border-b-2 px-4 py-2 text-sm ${tab === k ? "border-brand-600 font-medium text-brand-700" : "border-transparent text-text-muted hover:text-text"}`}>{label}</Link>
         ))}
       </nav>
+      {tab === "attendance" && user.role !== "owner" && <p role="status" className="mb-4 text-sm text-text-muted">Attendance is view-only. An administrator can correct entries.</p>}
       {tab === "attendance" && (
-        <AttendanceGrid start={start} days={days} dayLabels={days.map(formatDay)} locked={locked}
+        <AttendanceGrid start={start} days={days} dayLabels={days.map(formatDay)} locked={locked || user.role !== "owner"}
           holidays={Object.fromEntries(data.holidays.map((h) => [h.date, h.name]))}
           employees={employees} cells={cells} mechanicsFullDay={mechanicsFullDay} focus={typeof sp.focus === "string" ? sp.focus : undefined} />
       )}

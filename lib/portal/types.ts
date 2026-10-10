@@ -1,0 +1,2 @@
+export type PayWeek={daysPaid?:number;dailyRate?:number;runId:string;version:string;period:string;end:string;payday:string;status:string;basic:number;base:number;ot:number;incentive:number;allowances:number;deductions:number;carriedIn:number;carryOut:number;gross:number;net:number;paid:number;paidOn:string|null;items:{kind:string;amount:number;detail:string}[]};
+export type PayslipSnapshot={hireDate?:string;restDay?:string;approvedBy?:string;approvedAt?:string;employeeId:string;name:string;code:string;rangeStart:string;rangeEnd:string;weeks:PayWeek[]};

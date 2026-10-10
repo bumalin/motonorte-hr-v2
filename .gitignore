@@ -53,3 +53,12 @@ next-env.d.ts
 *.age
 .claude/settings.local.json
 Kapetools.txt
+
+# Local runtime artifacts and credential/data archives
+/.claude/
+*.dump
+*.sql.gz
+*.zip
+*.tar
+*.pfx
+*.p12

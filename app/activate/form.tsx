@@ -1,0 +1,3 @@
+"use client";
+import {useActionState} from "react";import {activate} from "./actions.ts";
+export function ActivationForm(){const [state,action,pending]=useActionState(activate,undefined);return <form action={action} className="space-y-4">{[["email","Email","email"],["code","Activation code","text"],["password","Choose password","password"],["confirm","Confirm password","password"]].map(([name,label,type])=><label className="block" key={name}>{label}<input className="portal-input" name={name} type={type} required autoComplete={type==="password"?"new-password":"off"} minLength={type==="password"?12:undefined}/></label>)}<p role="alert">{state?.error}</p><button className="portal-button" disabled={pending}>Set password & activate</button></form>;}

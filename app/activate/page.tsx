@@ -1,0 +1,2 @@
+import Link from "next/link";import {ActivationForm} from "./form.tsx";
+export default function ActivatePage(){return <main className="mx-auto max-w-md p-6"><h1 className="text-3xl font-bold">Activate your account</h1><p className="my-4 text-text-muted">Use the email and one-time code your administrator gave you. Choose your own password. No invitation email is needed.</p><ActivationForm/><Link className="mt-6 block underline" href="/login">Already activated? Sign in</Link></main>;}

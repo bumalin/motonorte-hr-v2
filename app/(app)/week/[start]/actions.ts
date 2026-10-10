@@ -29,6 +29,7 @@ function otMinutes(hours: string): number | null {
 /** Saves one grid cell. Empty status clears the entry. Returns an error message or nothing. */
 export async function saveCell(input: { employeeId: string; date: string; status: string; otHours: string }): Promise<string | void> {
   const user = await requireTab("week");
+  if (user.role !== "owner") return "Only an administrator can edit attendance.";
   const c = Cell.safeParse(input);
   if (!c.success) return "Invalid entry.";
   const ot = otMinutes(c.data.otHours);
@@ -53,6 +54,7 @@ export async function saveCell(input: { employeeId: string; date: string; status
 /** Explicit bulk fill (UX S-06): only EMPTY cells of employed days — F on work days, R on the rest day. */
 export async function fillEmptyCells(start: string): Promise<string | void> {
   const user = await requireTab("week");
+  if (user.role !== "owner") return "Only an administrator can edit attendance.";
   const s = isoDate.safeParse(start);
   if (!s.success) return "Invalid week.";
   try {
