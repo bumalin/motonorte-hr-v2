@@ -8,7 +8,7 @@ import { hasTab, homeFor, type Tab } from "./tabs.ts";
 import { periodStartOf, todayManila } from "../format.ts";
 
 export type Role = "staff" | "owner";
-export interface SessionUser { id: string; email: string; fullName: string; role: Role; tabs: string[] }
+export interface SessionUser { id: string; email: string; fullName: string; role: Role; tabs: string[]; accessKind: string; employeeId: string | null }
 
 /** Client IP for the login throttle and audit. Trusted only when TRUST_PROXY=1 (the app sits behind Caddy, which
  *  replaces any client-sent X-Forwarded-For). Without a trusted proxy it returns null: throttling then falls back
@@ -33,10 +33,10 @@ export async function createSession(userId: string): Promise<void> {
 export const getSession = cache(async (): Promise<SessionUser | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const rows = await withAnon((tx) => tx<{ user_id: string; email: string; full_name: string; role: Role; tabs: string[] }[]>`
+  const rows = await withAnon((tx) => tx<{ user_id: string; email: string; full_name: string; role: Role; tabs: string[]; access_kind: string; employee_id: string | null }[]>`
     select * from auth_get_session(${hashToken(token)}, ${new Date(Date.now() + SESSION_TTL_MS)})`);
   const r = rows[0];
-  return r ? { id: r.user_id, email: r.email, fullName: r.full_name, role: r.role, tabs: r.tabs } : null;
+  return r ? { id: r.user_id, email: r.email, fullName: r.full_name, role: r.role, tabs: r.tabs, accessKind: r.access_kind, employeeId: r.employee_id } : null;
 });
 
 export async function deleteSession(): Promise<void> {
@@ -56,7 +56,7 @@ export async function requireUser(): Promise<SessionUser> {
 /** Owner-only actions. The DB enforces this too (app_role() in RLS and functions). */
 export async function requireOwner(): Promise<SessionUser> {
   const user = await requireUser();
-  if (user.role !== "owner") throw new Error("FORBIDDEN: owner only");
+  if (user.role !== "owner" || user.accessKind === "crew") throw new Error("FORBIDDEN: owner only");
   return user;
 }
 

@@ -31,6 +31,8 @@ function db(): postgres.Sql {
 export async function withUser<T>(userId: string, fn: (tx: Tx) => Promise<T>): Promise<T> {
   return (await db().begin(async (tx) => {
     await tx`select set_config('app.user_id', ${userId}, true)`;
+    // Small office workspace: serialize complete reads/calculations with source writes and approval.
+    await tx`select pg_advisory_xact_lock(76239146)`;
     return fn(tx);
   })) as T;
 }
