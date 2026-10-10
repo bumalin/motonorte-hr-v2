@@ -9,5 +9,10 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
  if(!r)throw new Error("DOWNLOAD_UNAVAILABLE");const pdf=await payslipPdf(r.snapshot as PayslipSnapshot,id);
  await tx`select consume_payslip(${id})`;return pdf;});
  return new Response(new Uint8Array(bytes),{headers:{"Content-Type":"application/pdf","Content-Disposition":`attachment; filename="MotoNorte-Payslips-${id}.pdf"`,"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
- }catch{return new Response("Approval unavailable, expired or already used. Request fresh admin approval.",{status:409,headers:{"Cache-Control":"no-store"}});}
+ }catch(e){
+  if(e instanceof Error&&e.message.includes("DOWNLOAD_UNAVAILABLE"))return new Response("Approval unavailable, expired or already used. Request fresh admin approval.",{status:409,headers:{"Cache-Control":"no-store"}});
+  // Transaction rolled back: the approval was not consumed, so the employee can simply retry.
+  console.error("payslip download failed",id,e);
+  return new Response("Couldn't generate the PDF. Your approval was not used; please try again.",{status:500,headers:{"Cache-Control":"no-store"}});
+ }
 }

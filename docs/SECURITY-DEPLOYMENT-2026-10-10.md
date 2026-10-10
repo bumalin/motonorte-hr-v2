@@ -8,4 +8,6 @@ Validation: production dependency audit reports zero vulnerabilities; 66 tests p
 
 The complete audit still reports five high findings in development-only ESLint dependencies (braces/micromatch/fast-glob and their parent packages). The suggested automatic fix downgrades eslint-config-next to an incompatible major version; it has not been applied. Do not claim that the complete audit is clean.
 
+Update (Owner decision, 2026-10-10): the office PC stays the live system and the VPS move is not planned. The security patch went live on the office PC with docs/PDF-DOWNLOAD-ERROR-2026-10-10.md.
+
 VPS deployment uses a separate Compose project, database volume and Nginx hostname. Do not start the Caddy production profile on a server already using Nginx on ports 80/443. Live data transfer, VPS restore validation, HTTPS and final browser checks remain deployment steps.
