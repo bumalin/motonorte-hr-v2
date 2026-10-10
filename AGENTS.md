@@ -32,7 +32,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - rollback-mypay.ps1 restores the exact pre-portal app image, preserving live data. Employee portal functions need the new image after rollback.
 
 ## Printed payslips
-- Admin browser-print and employee one-use PDF layouts follow the supplied A4 Payslip design. Exclude 13th-month estimates from print; My Pay viewing remains unchanged.
+- Admin browser-print and employee one-use PDF layouts follow the supplied A4 Payslip design. Exclude 13th-month estimates from print. My Pay no longer shows a 13th-month estimate (Owner, 2026-10-10); office Reports keep the 13th-month report.
 - Keep all PDF values in frozen approval snapshots. Do not query current payroll in the PDF renderer or recompute historical amounts. Missing legacy metadata must not be invented.
 - Await PDF generation before consume_payslip inside the same transaction. Keep same-origin POST enforcement and one-use ownership checks.
 - Only DOWNLOAD_UNAVAILABLE returns 409 "already used/expired"; any other download failure returns 500 saying the approval was not used (the transaction rolled back). Pre-fix image: motonorte-office-app:before-pdf-error-fix-20261010.
