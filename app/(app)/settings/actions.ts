@@ -35,6 +35,7 @@ export async function setMultiplier(_: SettingsState, form: FormData): Promise<S
     return { error: dbErrorMessage(e) };
   }
   revalidatePath("/settings");
+  revalidatePath("/team");
   return { ok: "Saved." };
 }
 
@@ -50,6 +51,7 @@ export async function addHoliday(_: SettingsState, form: FormData): Promise<Sett
     return { error: dbErrorMessage(e, "There's already a holiday on that date.") };
   }
   revalidatePath("/settings");
+  revalidatePath("/team");
   return { ok: `${h.data.name} added.` };
 }
 
@@ -63,6 +65,7 @@ export async function removeHoliday(form: FormData): Promise<string | void> {
     return dbErrorMessage(e);
   }
   revalidatePath("/settings");
+  revalidatePath("/team");
 }
 
 const Password = z.string().min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`).max(200);
@@ -96,6 +99,7 @@ export async function addUser(_: SettingsState, form: FormData): Promise<Setting
     return { error: dbErrorMessage(e, "A user with that email already exists.") };
   }
   revalidatePath("/settings");
+  revalidatePath("/team");
   return { ok: `${u.data.email} can now sign in with the temporary password.` };
 }
 
@@ -116,6 +120,8 @@ export async function updateUser(_: SettingsState, form: FormData): Promise<Sett
   if (!c.success) return { error: c.error.issues[0].message };
   if (id.data === owner.id && role.data !== "owner") return { error: "You can't demote your own account." };
   if (id.data === owner.id && pw) return { error: "Change your own password on the Account page (it asks for the current one)." };
+  const [account] = await withUser(owner.id, tx => tx`select access_kind from users where id=${id.data}`);
+  if (account?.access_kind === "crew") return { error: "Edit employee access on Team members." };
   const changes: Record<string, unknown> = { role: role.data, email: email.data, full_name: name.data, tabs: tabsOf(form, role.data), ...c.data };
   if (pw) {
     const p = Password.safeParse(pw);
@@ -129,6 +135,7 @@ export async function updateUser(_: SettingsState, form: FormData): Promise<Sett
     return { error: dbErrorMessage(e, "Another user already has that email.") };
   }
   revalidatePath("/settings");
+  revalidatePath("/team");
   return { ok: pw ? "Saved. Password reset — they've been signed out." : "Saved." };
 }
 
@@ -146,4 +153,5 @@ export async function setUserActive(form: FormData): Promise<string | void> {
     return dbErrorMessage(e);
   }
   revalidatePath("/settings");
+  revalidatePath("/team");
 }

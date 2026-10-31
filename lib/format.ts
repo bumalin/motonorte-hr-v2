@@ -1,6 +1,8 @@
 // Display formatting (docs/04-ux-spec.md §5). ISO dates are calendar dates in Asia/Manila;
 // they're formatted with timeZone UTC so the calendar day never shifts.
 
+import { addDays } from "./payroll/engine.ts";
+
 const peso = new Intl.NumberFormat("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** 1234567 centavos → "₱12,345.67"; negatives → "−₱150.00" (true minus sign). */
@@ -10,11 +12,13 @@ export function formatMoney(centavos: number): string {
   return centavos < 0 ? `−${s}` : s;
 }
 
-/** "150.00" or "150" → 15000 centavos; null if not a valid non-negative amount with ≤ 2 decimals. */
+/** "150.00", "150" or "1,234.50" → centavos; null if not a valid non-negative amount with ≤ 2 decimals. */
 export function parsePesos(input: string): number | null {
-  const m = input.trim().replace(/,/g, "").match(/^(\d{1,9})(?:\.(\d{1,2}))?$/);
+  const m = input.trim().match(/^(\d{1,3}(?:,\d{3})+|\d{1,9})(?:\.(\d{1,2}))?$/); // commas only as thousands separators
   if (!m) return null;
-  return Number(m[1]) * 100 + Number((m[2] ?? "").padEnd(2, "0"));
+  const whole = m[1].replace(/,/g, "");
+  if (whole.length > 9) return null;
+  return Number(whole) * 100 + Number((m[2] ?? "").padEnd(2, "0"));
 }
 
 const d = (iso: string) => new Date(`${iso}T00:00:00Z`);
@@ -28,11 +32,7 @@ export const formatDay = (iso: string) => dayShort.format(d(iso)).replace(",", "
 /** "Oct 5, 2026" */
 export const formatDate = (iso: string) => dateLong.format(d(iso));
 
-export function addDays(iso: string, n: number): string {
-  const x = d(iso);
-  x.setUTCDate(x.getUTCDate() + n);
-  return x.toISOString().slice(0, 10);
-}
+export { addDays };
 
 /** "Oct 5 – 11, 2026" · "Sep 28 – Oct 4, 2026" · "Dec 28, 2026 – Jan 3, 2027" */
 export function formatWeek(periodStart: string): string {

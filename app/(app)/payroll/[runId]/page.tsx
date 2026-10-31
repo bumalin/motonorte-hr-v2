@@ -32,11 +32,12 @@ export default async function RunPage({ params }: PageProps<"/payroll/[runId]">)
         l.carried_in, l.gross, l.net, l.carry_out
       from payroll_lines l join employees e on e.id = l.employee_id join payroll_runs r on r.id = l.run_id
       where l.run_id = ${runId} order by e.code`;
+    const versions = await tx<{ id: number; archived_at: Date; reason: string; snapshot: {run:{locked_at:string};lines:{code:string;full_name:string;net:number}[]} }[]>`select id,archived_at,reason,snapshot from payroll_run_versions where run_id=${runId} order by id desc`;
     const items = await tx<Item[]>`select employee_id, date::text, kind, amount, rule_id, source from payroll_items where run_id = ${runId} order by date nulls last, id`;
-    return { run, lines, items };
+    return { run, lines, items, versions };
   });
   if (!data) notFound();
-  const { run, lines, items } = data;
+  const { run, lines, items, versions } = data;
   const isOwner = user.role === "owner";
   const stale = run.status !== "locked" && (await currentRunHash(user.id, run.id))?.hash !== run.input_hash;
 
@@ -97,7 +98,7 @@ export default async function RunPage({ params }: PageProps<"/payroll/[runId]">)
         {run.status === "locked" && isOwner && run.latest && (
           <ConfirmDialog trigger="Reopen week" danger title={`Reopen payroll ${formatWeek(run.period_start)}?`} confirmLabel="Reopen" action={unlockRun}
             body={<>It goes back to draft so attendance, jobs and adjustments can be fixed; then regenerate, submit and lock it again.
-              If it was already paid through the bank, pay any difference separately. The reason is kept in the audit log.</>}>
+              If it was already paid through the bank, pay any difference separately. The original approved calculation is saved in history before corrections.</>}>
             {hidden}
             <label className="block text-sm">Reason<textarea name="note" required rows={3} className="mt-1 block w-full rounded-md border border-border px-3 py-2" /></label>
           </ConfirmDialog>
@@ -107,6 +108,7 @@ export default async function RunPage({ params }: PageProps<"/payroll/[runId]">)
         )}
       </div>
 
+      {versions.length > 0 && <section className="mb-4 rounded-md border border-border bg-surface p-4"><h2 className="font-semibold">Previous approved versions</h2><p className="mt-1 text-sm text-text-muted">Original calculations are retained when an administrator reopens this run.</p>{versions.map(v=><details key={v.id} className="mt-3 border-t border-border pt-3"><summary className="cursor-pointer text-sm font-medium">Approved {formatDate(v.snapshot.run.locked_at.slice(0,10))} · Net {formatMoney(v.snapshot.lines.reduce((n,l)=>n+l.net,0))}</summary><p className="my-2 text-sm">{v.reason}</p><ul className="space-y-1 text-sm">{v.snapshot.lines.map(l=><li key={l.code}>{l.code} · {l.full_name} · {formatMoney(l.net)}</li>)}</ul></details>)}</section>}
       <dl className="mb-4 grid grid-cols-3 gap-3 text-sm md:grid-cols-6">
         {[["Employees", String(lines.length)], ["Gross", formatMoney(sum("gross"))], ["Deductions", formatMoney(sum("deductions") + sum("carried_in"))],
           ["Net", formatMoney(sum("net"))], ["Incentive pool", formatMoney(sum("incentive"))], ["Carry-out", formatMoney(sum("carry_out"))]].map(([k, v]) => (

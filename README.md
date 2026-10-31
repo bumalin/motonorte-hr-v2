@@ -89,4 +89,16 @@ docs/           PRD, payroll rules, architecture, UX spec, runbooks, reviews
 | [06-task-queue.md](docs/06-task-queue.md) | Tasks and backlog |
 | [07-test-report.md](docs/07-test-report.md) · [08-security-report.md](docs/08-security-report.md) · [09-launch-checklist.md](docs/09-launch-checklist.md) | QA, security, launch |
 
-Private project. All rights reserved.
+All rights reserved.
+
+## Employee portal and current release
+
+Administrators create linked employee accounts under **Team members** by adding the existing employee's email. No email invitation is sent. Share the one-use, 7-day activation code privately; the employee activates the account and chooses a password. Administrators select exactly which office or personal tabs each account can access. Attendance editing remains administrator-only.
+
+Employees can view their own profile and approved earnings, and request a weekly, monthly or custom-range payslip. Each PDF download requires fresh administrator approval. Monthly documents begin with combined category totals, including when only one approved week exists; missing approved paydays are marked as a partial month. Complete weeks are included by scheduled payday. Historical approvals remain frozen. The 13th-month estimate is excluded from printed payslips.
+
+Current local installation: http://localhost:3005, Compose project `motonorte-office`. Existing installations must preserve `.env` and the PostgreSQL volume: do not rerun seed/reset or replace credentials. Back up and restore-test before migrations. Never run `docker compose down -v`.
+
+GitHub CI uses a fresh `motonorte_integrity_test` database and serializes database tests so the guarded payroll/auth/portal regressions run without being skipped. Do not run those tests against a live database. Migration files are preserved byte-for-byte because their checksums are enforced.
+
+Release evidence and rollback guidance: [monthly payslips](docs/MONTHLY-PAYSLIPS-2026-10-10.md), [employee portal](docs/EMPLOYEE-PORTAL-2026-10-10.md), and [print design](docs/PAYSLIP-DESIGN-2026-10-10.md). VPS deployment is pending; known dependency security findings must be patched and revalidated before public service access.

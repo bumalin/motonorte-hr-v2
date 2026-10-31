@@ -2,6 +2,13 @@
 // (details stay in the server log).
 
 const KNOWN: [RegExp, string][] = [
+  [/PAYMENT_EXCEEDS_BALANCE/, "The payment exceeds this employee's unpaid approved net pay."],
+  [/PAYMENT_INVALID/, "Choose an approved payroll and a payment date that is not in the future."],
+  [/REQUEST_NOT_PENDING/, "This request has already been reviewed."],
+  [/REASON_REQUIRED/, "Give a reason for rejection."],
+  [/SNAPSHOT_INVALID/, "Payroll changed. Refresh the request before approving."],
+  [/No approved payroll/, "There is no approved payroll in this range."],
+  [/five pending requests/, "You already have five pending requests."],
   [/would alter a locked payroll week|part of locked history/, "That change would alter a locked payroll week. Date it after that week, or add a later row that ends it before the locked week."],
   [/HISTORICAL_CARRY/, "This past week has deductions larger than its pay, and later weeks are already locked, so the balance could never be deducted. Reduce the deductions for this week."],
   [/pay_terms_one_active_per_day/, "That employee already has a rate starting on that date."],

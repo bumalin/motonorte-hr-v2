@@ -22,13 +22,14 @@ function moveFocus(e: React.KeyboardEvent<HTMLSelectElement>) {
   for (let i = 0; i < 50; i++) {
     r += d[0]; c += d[1];
     if (c < 0 || c > 6 || r < 0) return;
-    const next = document.querySelector<HTMLSelectElement>(`select[data-r="${r}"][data-c="${c}"]`);
+    const mode=e.currentTarget.dataset.phone?'[data-phone="true"]':':not([data-phone="true"])';
+    const next = document.querySelector<HTMLSelectElement>(`select[data-r="${r}"][data-c="${c}"]${mode}`);
     if (next) { next.focus(); return; }
     if (!document.querySelector(`[data-row="${r}"]`)) return;
   }
 }
 
-function GridCell({ emp, date, row, col, initial, locked }: { emp: GridEmployee; date: string; row: number; col: number; initial: Cell; locked: boolean }) {
+function GridCell({ emp, date, row, col, initial, locked, phone=false }: { emp: GridEmployee; date: string; row: number; col: number; initial: Cell; locked: boolean; phone?:boolean }) {
   // Local state follows server data when it changes (e.g. after "Fill empty cells") without remounting
   const [cell, setCell] = useState(initial);
   const [seen, setSeen] = useState(initial);
@@ -46,11 +47,11 @@ function GridCell({ emp, date, row, col, initial, locked }: { emp: GridEmployee;
       if (error) { setCell(prev); setOtDraft(prev.otHours); setMsg({ error }); } else setMsg({ ok: true });
     });
   };
-  const label = `${emp.code} ${date}`;
+  const label = `${emp.code} ${date}${phone?" phone":""}`;
   return (
     <td className={`border-l border-border px-1.5 py-1 align-top ${isRest ? "bg-info/5" : ""} ${cell.status === "" && !locked ? "outline outline-1 -outline-offset-2 outline-warning/60" : ""}`}>
       <select aria-label={`${label} status`} value={cell.status} disabled={locked} aria-busy={pending}
-        data-r={row} data-c={col} data-key={`${emp.id}|${date}`} onKeyDown={moveFocus}
+        data-phone={phone?"true":undefined} data-r={row} data-c={col} data-key={`${emp.id}|${date}`} onKeyDown={moveFocus}
         onChange={(e) => save({ status: e.target.value, otHours: e.target.value === "F" ? cell.otHours : "" })}
         className={`w-full rounded border border-border bg-surface px-1 py-0.5 text-sm font-medium ${COLOR[cell.status]}`}>
         <option value="">—</option>
@@ -82,7 +83,7 @@ export function AttendanceGrid({ start, days, dayLabels, holidays, employees, ce
   // "Fix →" links from the generate error list land on the exact cell
   useEffect(() => {
     if (!focus) return;
-    const el = document.querySelector<HTMLSelectElement>(`select[data-key="${CSS.escape(focus)}"]`);
+    const el = Array.from(document.querySelectorAll<HTMLSelectElement>(`select[data-key="${CSS.escape(focus)}"]`)).find(e=>e.getClientRects().length>0);
     el?.scrollIntoView({ block: "center" });
     el?.focus();
   }, [focus]);
@@ -90,7 +91,7 @@ export function AttendanceGrid({ start, days, dayLabels, holidays, employees, ce
   return (
     <div className="space-y-3">
       {!locked && (
-        <div className="flex items-center gap-3">
+        <div className="attendance-tools flex flex-wrap items-center gap-3">
           <button type="button" disabled={filling || empty === 0}
             onClick={() => startFill(async () => setFillError((await fillEmptyCells(start)) ?? undefined))}
             className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 disabled:opacity-50">
@@ -100,8 +101,8 @@ export function AttendanceGrid({ start, days, dayLabels, holidays, employees, ce
           {fillError && <span role="alert" className="text-sm text-danger">{fillError}</span>}
         </div>
       )}
-      <div className="overflow-x-auto rounded-md border border-border bg-surface">
-        <table className="w-full min-w-[900px] text-sm">
+      <div className="attendance-desktop overflow-x-auto rounded-md border border-border bg-surface">
+        <table data-attendance className="w-full min-w-[900px] text-sm">
           <thead className="bg-surface-2 text-text-muted">
             <tr>
               <th scope="col" className="w-48 px-3 py-2 text-left font-medium">Employee</th>
@@ -133,6 +134,7 @@ export function AttendanceGrid({ start, days, dayLabels, holidays, employees, ce
           </tfoot>
         </table>
       </div>
+      <div className="attendance-phone">{employees.map((e,index)=><details key={e.id} open={index===0} className="attendance-person-card"><summary><span className="font-mono text-brand-700">{e.code}</span><strong>{e.name}</strong><span className="text-text-muted">{GROUP[e.position]||e.position} · {e.restDay} off</span></summary><table data-attendance className="w-full"><thead><tr><th scope="col">Day</th><th scope="col">Attendance &amp; overtime</th></tr></thead><tbody>{days.map((d,i)=><tr key={d}><th scope="row" className="text-left text-sm font-normal p-3">{dayLabels[i]}{holidays[d]&&<span className="block text-xs text-warning">{holidays[d]}</span>}</th>{e.employed[i]?<GridCell emp={e} date={d} row={rowOf.get(e.id)!} col={i} initial={cells[`${e.id}|${d}`]||{status:"",otHours:""}} locked={locked} phone/>:<td className="text-text-muted p-3">Not employed</td>}</tr>)}</tbody></table></details>)}</div>
     </div>
   );
 }

@@ -1,0 +1,78 @@
+
+/* A4 payslip reference: white paper, self-hosted design fonts, fixed document proportions. */
+@font-face{font-family:SlipManrope;src:url('/payslip-fonts/manrope-400.ttf');font-weight:400}
+@font-face{font-family:SlipManrope;src:url('/payslip-fonts/manrope-700.ttf');font-weight:700}
+@font-face{font-family:SlipBarlow;src:url('/payslip-fonts/barlow-condensed-800.woff');font-weight:800}
+@font-face{font-family:SlipMono;src:url('/payslip-fonts/jetbrains-mono-700.ttf');font-weight:700}
+.print-slip-preview{overflow-x:auto}
+.print-slip-group{width:210mm;margin:0 auto 24px}
+.print-slip,.print-slip-detail{width:210mm;background:#fff;color:#1a1a1a;font-family:SlipManrope,sans-serif}
+.print-slip{height:297mm;display:flex;flex-direction:column}
+.print-slip *,.print-slip-detail *{box-sizing:border-box}
+.print-slip-header{height:128px;flex:none;background:#0a0a0a;border-bottom:6px solid #e30613;display:flex;align-items:center;justify-content:space-between;padding:0 48px;color:white}
+.print-slip-header>div{display:flex;flex-direction:column;gap:8px}
+.print-slip-header>div:last-child{align-items:flex-end}
+.print-slip-header span{font-family:SlipMono,monospace;font-size:12px;letter-spacing:.12em}
+.print-slip-header b{font-family:SlipBarlow,sans-serif;font-size:44px;line-height:1;letter-spacing:.04em;background:#e30613;padding:4px 18px;transform:skewX(-6deg)}
+.print-slip-header img{display:block}
+.print-slip-content{padding:26px 48px 0;display:flex;flex:1;flex-direction:column;gap:18px}
+.print-slip-person{display:flex;gap:20px;justify-content:space-between;border-bottom:2px solid #1a1a1a;padding-bottom:16px}
+.print-slip-person>div{flex:1;min-width:0}
+.print-slip-label{font-family:SlipMono,monospace;font-size:12px;letter-spacing:.2em;color:#6e6e6e}
+.workspace-content .print-slip-person h2{font-family:SlipBarlow,sans-serif;font-size:44px;font-weight:800;line-height:1;text-transform:uppercase;margin:6px 0;overflow-wrap:anywhere}
+.print-slip-person p{font-size:13px;color:#3f3f3f;line-height:1.5}
+.print-slip-person dl{font-size:12px;flex:none;width:270px;display:flex;flex-direction:column;gap:8px}
+.print-slip-person dl>div{display:flex;gap:14px;justify-content:space-between}
+.print-slip-person dt{color:#6e6e6e}
+.print-slip-person dd{text-align:right;font-weight:700;max-width:175px}
+.print-slip-net{display:flex;min-height:96px}
+.print-slip-net>div{background:#e30613;color:white;flex:1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 24px}
+.print-slip-net>div>span{display:flex;flex-direction:column;gap:4px}
+.print-slip-net strong{font-family:SlipBarlow,sans-serif;font-size:34px;line-height:1}
+.print-slip-net small{font-size:12px}
+.print-slip-net b{font-family:SlipMono,monospace;font-size:38px;white-space:nowrap}
+.print-slip-net aside{display:flex!important;width:150px;flex:none;background:#0a0a0a;color:#fff;flex-direction:column;justify-content:center;padding:14px 18px;gap:4px}
+.print-slip-net aside span{font-family:SlipMono,monospace;font-size:11px;color:#bdbdbd;letter-spacing:.16em}
+.print-slip-net aside strong{font-size:36px}
+.print-slip-columns,.print-slip-row{display:grid;grid-template-columns:1.1fr 1.6fr 1fr;gap:8px}
+.print-slip-columns{padding-bottom:8px;border-bottom:2px solid #1a1a1a;font-family:SlipMono,monospace;font-size:12px;letter-spacing:.12em}
+.print-slip-columns>span:nth-child(2){color:#6e6e6e}
+.print-slip-columns>span:last-child,.print-slip-row b{text-align:right}
+.print-slip-row{padding:9px 0;border-bottom:1px solid #bdbdbd;font-size:14px;line-height:1.5}
+.print-slip-row>span{color:#3f3f3f;font-size:13px}
+.print-slip-row b{font-family:SlipMono,monospace}
+.print-slip-total{background:#f1f1f1;padding:12px 10px;border:0}
+.print-slip-equation{border:2px solid #1a1a1a;padding:14px 18px;font-family:SlipMono,monospace;font-size:13px}
+.print-slip-equation strong{color:#b8050f}
+.print-slip-equation small{display:block;margin-top:4px}
+.print-slip-signatures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:48px;margin-top:8px}
+.print-slip-signatures>div{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.print-slip-signatures i{height:36px;border-bottom:1px solid #1a1a1a}
+.print-slip-signatures span{font-size:12px;color:#6e6e6e}
+.print-slip-note{margin-top:auto;padding-bottom:14px;font-size:11px;color:#6e6e6e;text-align:center}
+.print-slip-footer{height:76px;display:flex;flex:none}
+.print-slip-footer>div:first-child{width:150px;flex:none;display:flex;align-items:center;justify-content:center;background:#0a0a0a}
+.print-slip-footer>div:last-child{flex:1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px;background:#8c0410;color:#fff;font-size:10px;font-weight:700;line-height:1.6}
+.print-slip-footer span:last-child{text-align:right}
+.print-slip-detail{margin-top:24px}
+.print-slip-detail>div{padding:32px 48px}
+.workspace-content .print-slip-detail h2{font-family:SlipBarlow,sans-serif;font-size:32px}
+.print-slip-detail p{font-size:13px;margin-bottom:20px}
+.print-slip-detail-row{display:flex;gap:20px;justify-content:space-between;padding:10px 0;border-bottom:1px solid #bdbdbd;font-size:13px;break-inside:avoid;overflow-wrap:anywhere}
+.print-slip-detail-row b{font-family:SlipMono,monospace;white-space:nowrap;flex:none}
+@media print{
+ @page{size:A4;margin:0}
+ body{margin:0}
+ .workspace-shell,.workspace-body{display:block;width:100%;min-height:0}
+ .workspace-content{width:100%;margin:0;padding:0!important}
+ .print-slip-preview{overflow:visible}
+ .print-slip-group{margin:0;width:210mm;break-after:page}
+ .print-slip-group:last-child{break-after:auto}
+ .print-slip{height:297mm;break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .print-slip-header,.print-slip-footer,.print-slip-net,.print-slip-total{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .print-slip-net aside{display:flex!important}
+ .print-slip-detail{margin:0;break-before:page}
+}
+
+
+@media(max-width:599px){.print-slip-toolbar form{display:grid;grid-template-columns:auto minmax(0,1fr);width:100%;max-width:100%}.print-slip-toolbar select{min-width:0;max-width:100%}.print-slip-toolbar form button{justify-self:start}}

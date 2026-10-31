@@ -21,6 +21,9 @@ test("parse pesos to centavos", () => {
   assert.equal(parsePesos("-5"), null);
   assert.equal(parsePesos("1.234"), null);
   assert.equal(parsePesos("abc"), null);
+  assert.equal(parsePesos("1,5"), null); // decimal comma is not a thousands separator
+  assert.equal(parsePesos("1,50"), null);
+  assert.equal(parsePesos("12,345"), 1234500);
 });
 
 test("dates never shift across time zones", () => {

@@ -114,18 +114,18 @@ test("E2E-EMP-02 owner approves the proposed rate from the dashboard (US-002)", 
   await expect(owner.locator("tbody")).toContainText("Proposed by E2E Staff · Approved by E2E Owner");
 });
 
-test("E2E-WEEK-01 staff fills attendance: OT, half day, and clears one cell (US-021)", async () => {
-  await staff.goto(`/week/${WEEK}`);
-  await expect(staff.getByRole("heading", { name: "Oct 5 – 11, 2026" })).toBeVisible();
-  await setCell(staff, "M003", "2026-10-07", "H");
-  const ot = staff.getByLabel("M001 2026-10-05 overtime hours");
+test("E2E-WEEK-01 owner fills attendance: OT, half day, and clears one cell (US-021)", async () => {
+  await owner.goto(`/week/${WEEK}`);
+  await expect(owner.getByRole("heading", { name: "Oct 5 – 11, 2026" })).toBeVisible();
+  await setCell(owner, "M003", "2026-10-07", "H");
+  const ot = owner.getByLabel("M001 2026-10-05 overtime hours");
   await ot.fill("2");
   await ot.blur();
-  await expect(staff.locator("td", { has: ot }).getByText("✓")).toBeVisible();
-  await setCell(staff, "S001", "2026-10-08", ""); // leave a hole for the MISSING_ATTENDANCE check
-  await expect(staff.getByRole("button", { name: "Fill empty cells (1)" })).toBeVisible();
+  await expect(owner.locator("td", { has: ot }).getByText("✓")).toBeVisible();
+  await setCell(owner, "S001", "2026-10-08", ""); // leave a hole for the MISSING_ATTENDANCE check
+  await expect(owner.getByRole("button", { name: "Fill empty cells (1)" })).toBeVisible();
   // Footer: full-day mechanics per day (Wed drops to 2 because M003 is half day)
-  await expect(staff.locator("tfoot tr")).toHaveText(/Full-day mechanics\s*3\s*3\s*2\s*3\s*3\s*3\s*0/);
+  await expect(owner.locator("tfoot tr")).toHaveText(/Full-day mechanics\s*3\s*3\s*2\s*3\s*3\s*3\s*0/);
 });
 
 test("E2E-WEEK-02 staff logs a job and the pool summary splits it with the remainder rule (US-020)", async () => {
@@ -159,9 +159,11 @@ test("E2E-RUN-01 generate lists missing attendance with a Fix link; fixing it pr
   await expect(errors).toContainText("Missing attendance: S001 on Thu Oct 8");
   await errors.getByRole("link", { name: "Fix →" }).click();
   await expect(staff).toHaveURL(/focus=/);
-  await expect(staff.getByLabel("S001 2026-10-08 status")).toBeFocused();
+  await expect(staff.getByLabel("S001 2026-10-08 status")).toBeDisabled();
+  await owner.goto(`/week/${WEEK}`);
 
-  await staff.getByRole("button", { name: "Fill empty cells (1)" }).click();
+  await owner.getByRole("button", { name: "Fill empty cells (1)" }).click();
+  await staff.reload();
   await expect(staff.getByLabel("S001 2026-10-08 status")).toHaveValue("F");
 
   await staff.getByRole("button", { name: "Generate payroll draft" }).click();
@@ -397,8 +399,10 @@ test("E2E-EMP-03 deactivated employee is excluded from the next run; past run ke
 
   await staff.goto("/week/2026-10-19");
   await expect(staff.getByLabel("S002 2026-10-19 status")).toHaveCount(0);
-  await staff.getByRole("button", { name: /Fill empty cells/ }).click();
-  await expect(staff.getByRole("button", { name: "Fill empty cells (0)" })).toBeDisabled();
+  await owner.goto(staff.url());
+  await owner.getByRole("button", { name: /Fill empty cells/ }).click();
+  await staff.reload();
+  await expect(staff.getByRole("button", { name: /Fill empty cells/ })).toHaveCount(0);
   await staff.getByRole("button", { name: "Generate payroll draft" }).click();
   await expect(staff).toHaveURL(/\/payroll\/[0-9a-f-]{36}$/);
   const next = await netsInDb(staff.url().split("/").pop()!);

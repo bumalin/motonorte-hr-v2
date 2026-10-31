@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE } from "./lib/auth/token.ts";
 
 export function proxy(req: NextRequest) {
-  const isLogin = req.nextUrl.pathname === "/login";
+  const isLogin = ["/login", "/activate"].includes(req.nextUrl.pathname);
   if (!isLogin && !req.cookies.has(SESSION_COOKIE)) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }

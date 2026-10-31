@@ -1,6 +1,6 @@
 "use client";
 import { useActionState, useState } from "react";
-import { TABS, TAB_KEYS } from "@/lib/auth/tabs.ts";
+import { TABS } from "@/lib/auth/tabs.ts";
 import { addHoliday, addUser, setMultiplier, updateUser, type SettingsState } from "./actions.ts";
 
 const input = "mt-1 block w-full rounded-md border border-border bg-surface px-3 py-1.5";
@@ -46,13 +46,13 @@ export function AddHolidayForm() {
 
 /** Tab access checkboxes. Owners always see every tab, so the boxes are only shown for staff. */
 function TabBoxes({ role, tabs, who }: { role: string; tabs: readonly string[]; who: string }) {
-  if (role === "owner") return <p className="text-xs text-text-muted">Owners see every tab.</p>;
+  if (role === "owner") return <p className="text-xs text-text-muted">Administrators have every tab. Staff access is selected manually.</p>;
   return (
-    <fieldset className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+    <fieldset className="tab-access-grid">
       <legend className="mb-1 text-xs text-text-muted">Tabs {who} can open</legend>
-      {TABS.map((t) => (
-        <label key={t.key} className="inline-flex items-center gap-1.5">
-          <input type="checkbox" name="tabs" value={t.key} defaultChecked={tabs.includes(t.key)} className="accent-brand-600" />
+      {TABS.filter(t => !["mypay","profile","payslips"].includes(t.key)).map((t) => (
+        <label key={t.key} className="tab-access-option">
+          <input type="checkbox" role="switch" aria-label={t.label} name="tabs" value={t.key} defaultChecked={tabs.includes(t.key)} className="accent-brand-600" />
           {t.label}
         </label>
       ))}
@@ -89,12 +89,12 @@ export function AddUserForm() {
         <label className="text-sm">Email<input type="email" name="email" required className={input} /></label>
         <label className="text-sm">Name<input name="full_name" required className={input} /></label>
         <label className="text-sm">Role
-          <select name="role" value={role} onChange={(e) => setRole(e.target.value)} className={input}><option value="staff">Staff</option><option value="owner">Owner</option></select>
+          <select name="role" value={role} onChange={(e) => setRole(e.target.value)} className={input}><option value="staff">Staff</option><option value="owner">Owner / administrator</option></select>
         </label>
         <label className="text-sm">Temporary password<input type="password" name="password" required minLength={12} autoComplete="new-password" className={input} /></label>
       </div>
       <ContactFields who="the new user" />
-      <TabBoxes role={role} tabs={TAB_KEYS} who="this user" />
+      <TabBoxes role={role} tabs={[]} who="this user" />
       <div className="flex items-center gap-3">
         <button disabled={pending} className={button}>Add user</button>
         <Status state={state} />
@@ -103,10 +103,11 @@ export function AddUserForm() {
   );
 }
 
-export function UserRowForm({ user, self }: { user: { id: string; email: string; full_name: string; role: string; tabs: string[] } & Contact; self: boolean }) {
+export function UserRowForm({ user, self }: { user: { access_kind?: string; id: string; email: string; full_name: string; role: string; tabs: string[] } & Contact; self: boolean }) {
   const [state, action, pending] = useActionState<SettingsState, FormData>(updateUser, undefined);
   const [role, setRole] = useState(user.role);
   const who = user.email;
+  if (user.access_kind === "crew") return <a href="/team" className="underline text-sm">Edit employee login on Team members</a>;
   return (
     <details className="rounded-md border border-border">
       <summary className="cursor-pointer px-3 py-1.5 text-sm hover:bg-surface-2">Edit <span className="sr-only">{who}</span></summary>

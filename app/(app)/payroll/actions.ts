@@ -9,7 +9,7 @@ import { dbErrorMessage } from "@/lib/db/errors.ts";
 import { loadPeriodInput } from "@/lib/db/loadPeriodInput.ts";
 import { computeWeek } from "@/lib/payroll/engine.ts";
 import { inputHash } from "@/lib/payroll/hash.ts";
-import { currentRunHash } from "@/lib/db/runs.ts";
+import { periodStartOf } from "@/lib/format.ts";
 import type { PayrollError } from "@/lib/payroll/types.ts";
 
 export type GenerateState = { error?: string; errors?: PayrollError[] } | undefined;
@@ -17,7 +17,7 @@ export type GenerateState = { error?: string; errors?: PayrollError[] } | undefi
 export async function generateDraft(_: GenerateState, form: FormData): Promise<GenerateState> {
   const user = await requireTab("payroll");
   const start = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).safeParse(form.get("period_start"));
-  if (!start.success) return { error: "Invalid week." };
+  if (!start.success || periodStartOf(start.data) !== start.data) return { error: "Invalid week." };
 
   let runId: string;
   try {
@@ -59,12 +59,14 @@ export async function submitRun(form: FormData): Promise<string | void> {
   const id = RunId.safeParse(form.get("run_id"));
   if (!id.success) return "Invalid run.";
   try {
-    const now = await currentRunHash(user.id, id.data);
-    const [run] = await withUser(user.id, (tx) => tx<{ input_hash: string }[]>`select input_hash from payroll_runs where id = ${id.data}`);
-    if (!now || !run) return "Run not found.";
-    if (now.hash !== run.input_hash) return dbErrorMessage(new Error("RUN_STALE"));
-    await withUser(user.id, (tx) => tx`select submit_run(${id.data})`);
-    await afterChange(id.data, now.start);
+    const start = await withUser(user.id, async (tx) => {
+      const [run] = await tx<{ input_hash: string; start: string }[]>`select input_hash, period_start::text as start from payroll_runs where id = ${id.data}`;
+      if (!run) throw new Error("Run not found.");
+      if (inputHash(await loadPeriodInput(tx, run.start)) !== run.input_hash) throw new Error("RUN_STALE");
+      await tx`select submit_run(${id.data})`;
+      return run.start;
+    });
+    await afterChange(id.data, start);
   } catch (e) {
     return dbErrorMessage(e);
   }

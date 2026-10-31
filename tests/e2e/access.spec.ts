@@ -48,3 +48,11 @@ test("E2E-ACC-02 any past week can be opened from the week picker", async ({ pag
   await expect(page).toHaveURL(/\/week\/2025-03-10$/);
   await expect(page.getByRole("button", { name: "Generate payroll draft" })).toBeVisible();
 });
+
+test("E2E-ACC-03 staff attendance is read-only even with the week tab",async({page})=>{
+ await login(page,"staff");
+ await page.goto("/week/2026-10-05");
+ await expect(page.getByText("Attendance is view-only. An administrator can correct entries.")).toBeVisible();
+ await expect(page.getByLabel("M001 2026-10-05 status")).toBeDisabled();
+ await expect(page.getByRole("button",{name:/Fill empty cells/})).toHaveCount(0);
+});
