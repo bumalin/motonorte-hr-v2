@@ -284,3 +284,7 @@ button.team-row:hover,[data-selected]>.team-row{background:var(--surface-2)}[dat
 .team-code{border:1px solid var(--warning);padding:14px;display:flex;flex-direction:column;gap:8px}.team-code code{font-size:15px;word-break:break-all;user-select:all}.team-code p:last-child{font-size:12px;color:var(--text-muted)}
 @media(max-width:899px){.team-cols{display:none}.team-row{grid-template-columns:minmax(0,1fr) auto;gap:10px 14px}.team-role,.team-last,.team-arrow{display:none}.team-access{grid-column:1/-1;grid-row:2}.team-status{grid-row:1;grid-column:2}}
 @media(max-width:599px){.team-head h1{font-size:42px}.team-points{grid-template-columns:1fr}.team-toolbar-end{width:100%}.team-toolbar-end input{flex:1;width:auto}.team-grid2,.team-tiles,.team-kinds{grid-template-columns:1fr}.team-drawer-head,.team-drawer-body,.team-drawer-foot{padding-left:18px;padding-right:18px}}
+/* Sidebar groups + icons */
+.sidebar-groups{display:grid;gap:18px}.nav-group-label{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted);padding:0 14px 6px;opacity:.85}
+.workspace-sidebar .workspace-nav-link{gap:12px;min-height:40px;padding:8px 14px}.nav-icon{flex-shrink:0;opacity:.75}.workspace-nav-link:hover .nav-icon,.workspace-nav-link.is-active .nav-icon{opacity:1}.workspace-nav-link.is-active .nav-icon{color:var(--brand-text)}
+.nav-badge{margin-left:auto;min-width:20px;padding:1px 6px;text-align:center;font-size:11px;font-weight:700;background:var(--brand);color:#fff}

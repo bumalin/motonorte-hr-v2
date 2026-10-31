@@ -56,7 +56,7 @@ export async function fillEmptyCells(start: string): Promise<string | void> {
   const user = await requireTab("week");
   if (user.role !== "owner") return "Only an administrator can edit attendance.";
   const s = isoDate.safeParse(start);
-  if (!s.success) return "Invalid week.";
+  if (!s.success || periodStartOf(s.data) !== s.data) return "Invalid week.";
   try {
     await withUser(user.id, (tx) => tx`
       insert into attendance (employee_id, date, status)

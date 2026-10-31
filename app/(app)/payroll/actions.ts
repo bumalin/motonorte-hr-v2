@@ -9,6 +9,7 @@ import { dbErrorMessage } from "@/lib/db/errors.ts";
 import { loadPeriodInput } from "@/lib/db/loadPeriodInput.ts";
 import { computeWeek } from "@/lib/payroll/engine.ts";
 import { inputHash } from "@/lib/payroll/hash.ts";
+import { periodStartOf } from "@/lib/format.ts";
 import type { PayrollError } from "@/lib/payroll/types.ts";
 
 export type GenerateState = { error?: string; errors?: PayrollError[] } | undefined;
@@ -16,7 +17,7 @@ export type GenerateState = { error?: string; errors?: PayrollError[] } | undefi
 export async function generateDraft(_: GenerateState, form: FormData): Promise<GenerateState> {
   const user = await requireTab("payroll");
   const start = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).safeParse(form.get("period_start"));
-  if (!start.success) return { error: "Invalid week." };
+  if (!start.success || periodStartOf(start.data) !== start.data) return { error: "Invalid week." };
 
   let runId: string;
   try {
