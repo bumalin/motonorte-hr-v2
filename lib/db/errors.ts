@@ -2,6 +2,13 @@
 // (details stay in the server log).
 
 const KNOWN: [RegExp, string][] = [
+  [/CONTRIBUTION_EMPLOYMENT_FROZEN/, "This employee's employer contributions are already in a submitted or approved week. Reopen the latest affected payroll before changing hire or end dates."],
+  [/CONTRIBUTION_MONTH_FROZEN/, "Employer contributions for that month are already in a submitted or approved week, so they can't be changed."],
+  [/CONTRIBUTION_RUN_STALE/, "Employer contribution amounts or approvals changed since this draft was generated. Regenerate it first."],
+  [/CONTRIBUTION_BACKFILL|Contribution backfill/, "A later week in this benefit month is already approved. Reopen that week before generating this earlier one."],
+  [/CONTRIBUTION_EXCEEDS_ENTITLEMENT|exceeds monthly entitlement/, "Employer contributions would exceed the monthly amount. Check the employee's contribution settings and approved weeks."],
+  [/CONTRIBUTION_AMOUNT_REQUIRED/, "Enter all three monthly amounts."],
+  [/EMPLOYEE_NOT_FOUND/, "Employee not found."],
   [/PAYMENT_EXCEEDS_BALANCE/, "The payment exceeds this employee's unpaid approved net pay."],
   [/PAYMENT_INVALID/, "Choose an approved payroll and a payment date that is not in the future."],
   [/REQUEST_NOT_PENDING/, "This request has already been reviewed."],

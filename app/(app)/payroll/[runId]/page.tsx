@@ -1,4 +1,7 @@
 import Link from "next/link";
+import {loadRunContributions} from '@/lib/contributions/data.ts';
+import {EmployerContributions} from '@/components/employer-contributions.tsx';
+import {BENEFITS,contributionsUnrecorded} from '@/lib/contributions/types.ts';
 import { notFound } from "next/navigation";
 import { requireTab } from "@/lib/auth/session.ts";
 import { withUser } from "@/lib/db/client.ts";
@@ -13,7 +16,7 @@ import { lockRun, sendBackRun, submitRun, unlockRun } from "../actions.ts";
 // S-08 Run review — US-030..032
 type Run = { id: string; period_start: string; status: string; input_hash: string; generated_at: Date; generated_by: string | null;
   sent_back_note: string | null; locked_at: Date | null; locked_by: string | null; latest: boolean };
-type Line = { employee_id: string; code: string; full_name: string; position: string | null; base: number; ot: number; incentive: number;
+type Line = { contribution_coverage:string;employee_id: string; code: string; full_name: string; position: string | null; base: number; ot: number; incentive: number;
   allowances: number; deductions: number; carried_in: number; gross: number; net: number; carry_out: number };
 
 export default async function RunPage({ params }: PageProps<"/payroll/[runId]">) {
@@ -29,12 +32,12 @@ export default async function RunPage({ params }: PageProps<"/payroll/[runId]">)
     if (!run) return null;
     const lines = await tx<Line[]>`
       select l.employee_id, e.code, e.full_name, (select t.position from pay_terms t where t.employee_id = e.id and t.status = 'approved' and t.effective_from <= r.period_start + 6 order by t.effective_from desc limit 1) as position, l.base, l.ot, l.incentive, l.allowances, l.deductions,
-        l.carried_in, l.gross, l.net, l.carry_out
+        l.carried_in, l.gross, l.net, l.carry_out,l.contribution_coverage
       from payroll_lines l join employees e on e.id = l.employee_id join payroll_runs r on r.id = l.run_id
       where l.run_id = ${runId} order by e.code`;
     const versions = await tx<{ id: number; archived_at: Date; reason: string; snapshot: {run:{locked_at:string};lines:{code:string;full_name:string;net:number}[]} }[]>`select id,archived_at,reason,snapshot from payroll_run_versions where run_id=${runId} order by id desc`;
     const items = await tx<Item[]>`select employee_id, date::text, kind, amount, rule_id, source from payroll_items where run_id = ${runId} order by date nulls last, id`;
-    return { run, lines, items, versions };
+    return { run, lines, items, versions,contributions:await loadRunContributions(tx,runId) };
   });
   if (!data) notFound();
   const { run, lines, items, versions } = data;
@@ -121,7 +124,7 @@ export default async function RunPage({ params }: PageProps<"/payroll/[runId]">)
           <thead className="sticky top-0 bg-surface-2 text-text-muted">
             <tr>
               {["Employee", "Position", "Days"].map((h) => <th key={h} scope="col" className="px-3 py-2 text-left font-medium">{h}</th>)}
-              {[...cols.map((c) => c[1]), "Gross", "Net", "Carry out"].map((h) => <th key={h} scope="col" className="px-3 py-2 text-right font-medium">{h}</th>)}
+              {[...cols.map((c) => c[1]), "Gross", "Net", "Carry out","Employer SSS","Employer PhilHealth","Employer Pag-IBIG"].map((h) => <th key={h} scope="col" className="px-3 py-2 text-right font-medium">{h}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -138,6 +141,7 @@ export default async function RunPage({ params }: PageProps<"/payroll/[runId]">)
                 <td className="px-3 py-2 text-right"><Money value={l.gross} /></td>
                 <td className="px-3 py-2 text-right font-semibold"><Money value={l.net} /></td>
                 <td className="px-3 py-2 text-right">{l.carry_out ? <Money value={l.carry_out} className="text-warning" /> : <span className="text-text-muted">—</span>}</td>
+                {BENEFITS.map(k=><td key={k} className="px-3 py-2 text-right">{data.contributions===null||contributionsUnrecorded(l.contribution_coverage)?'Not recorded':formatMoney(data.contributions.filter(c=>c.employeeId===l.employee_id).reduce((n,c)=>n+c.amounts[k],0))}</td>)}
               </tr>
             ))}
           </tbody>
@@ -148,11 +152,14 @@ export default async function RunPage({ params }: PageProps<"/payroll/[runId]">)
               <td className="px-3 py-2 text-right"><Money value={sum("gross")} /></td>
               <td className="px-3 py-2 text-right"><Money value={sum("net")} /></td>
               <td className="px-3 py-2 text-right"><Money value={sum("carry_out")} /></td>
+              {BENEFITS.map(k=><td key={k} className="px-3 py-2 text-right">{data.contributions===null?'Not recorded':formatMoney(data.contributions.reduce((n,c)=>n+c.amounts[k],0))}</td>)}
             </tr>
           </tfoot>
         </table>
       </div>
       <p className="mt-2 text-xs text-text-muted">Payday {formatDate(addDays(run.period_start, 6))}. Click any amount to see how it was calculated.</p>
+      <EmployerContributions allocations={data.contributions}/>
+      {lines.some(l=>l.contribution_coverage==='unconfigured')&&<p className="text-sm">Partial employer contribution totals: some eligible employees have no configured amounts.</p>}
     </>
   );
 }

@@ -1,4 +1,5 @@
 import {summarizeRange,needsRangeSummary} from "./summary.ts";
+import {summarizeContributions} from '../contributions/summary.ts';
 import PDFDocument from "pdfkit";
 import SVGtoPDF from "svg-to-pdfkit";
 import {readFileSync} from "node:fs";
@@ -84,6 +85,10 @@ export async function payslipPdf(s:PayslipSnapshot,documentId:string):Promise<Bu
   doc.rect(36,589,523,45).lineWidth(1.5).strokeColor(black).stroke();
   text(money(w.gross)+" gross − "+money(w.deductions+w.carriedIn)+" deductions",49,599,480,9,"monoBold");
   text("= "+money(w.net)+" net"+(w.carryOut?" · "+money(w.carryOut)+" carried forward":""),49,615,480,9,"monoBold","#b8050f");
+  const benefits=summarizeContributions([w]);
+  text("EMPLOYER CONTRIBUTIONS · EXCLUDED FROM NET PAY",36,642,523,8,"monoBold");
+  text(w.contributions==null?"Not recorded for this payroll.":"SSS "+money(benefits.sss)+" · PhilHealth "+money(benefits.philhealth)+" · Pag-IBIG "+money(benefits.pagibig),36,654,523,8,"mono");
+  if(benefits.benefitMonths.length)text("Benefit month: "+benefits.benefitMonths.map(m=>m.slice(0,7)).join(', ')+" · Allocation does not confirm remittance.",36,666,523,7,"body",muted);
   line(681,36,243);line(681,316,243);
   text("Prepared by: "+(s.approvedBy??"Administrator"),36,689,243,9,"bold");
   text("Payroll locked "+date(w.version)+"\nReceived payments: "+money(w.paid)+(w.paidOn?" · "+date(w.paidOn):""),36,706,243,8,"body",muted);
@@ -115,6 +120,15 @@ export async function payslipPdf(s:PayslipSnapshot,documentId:string):Promise<Bu
    columns("APPROVED WEEKS",218);
    s.weeks.slice(offset,offset+16).forEach((w,i)=>row(date(w.period),date(w.end)+" · Payday "+date(w.payday),w.net,250+i*28));
   }
+ }
+ if(needsRangeSummary(s.rangeStart,s.rangeEnd,s.weeks.length)&&s.weeks.some(w=>w.contributions!=null)){
+  const b=summarizeContributions(s.weeks);
+  page('BENEFITS',date(s.rangeStart)+' - '+date(s.rangeEnd));identity('Employer government contributions\nSelected payroll paydays');columns('EMPLOYER CONTRIBUTIONS',218);
+  if(b.recordedWeeks){row('SSS','Recorded employer allocation',b.sss,250);row('PhilHealth','Recorded employer allocation',b.philhealth,282);row('Pag-IBIG','Recorded employer allocation',b.pagibig,314);row('Employer total','Excluded from gross and net pay',b.total,352,true);}
+  else text('Not recorded for the included payroll weeks.',36,250,523,11,'bold');
+  text('Fully employer-funded. These figures are allocations, not confirmation of agency remittance.',36,399,523,10);
+  if(b.benefitMonths.length)text('Benefit months: '+b.benefitMonths.map(m=>m.slice(0,7)).join(', ')+'. Final settlements retain their original benefit month.',36,434,523,9);
+  if(b.missingWeeks)text('Incomplete contribution coverage: '+b.missingWeeks+' included week(s) have no recorded metadata. Listed amounts are recorded subtotals only.',36,476,523,10,'bold','#b8050f');
  }
  for(const w of s.weeks){
   weekly(w);

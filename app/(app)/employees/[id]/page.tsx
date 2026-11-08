@@ -1,4 +1,6 @@
 import Link from "next/link";
+import {ContributionForm} from './contribution-form.tsx';
+import {formatMoney} from '@/lib/format.ts';
 import { notFound } from "next/navigation";
 import { requireTab } from "@/lib/auth/session.ts";
 import { withUser } from "@/lib/db/client.ts";
@@ -37,13 +39,14 @@ export default async function EmployeePage({ params, searchParams }: PageProps<"
     const terms = await tx<Terms[]>`select t.id, t.effective_from::text, t.position, t.daily_rate, t.daily_allowance, t.status,
         user_name(t.proposed_by) as proposed_by, user_name(t.decided_by) as decided_by
       from pay_terms t where t.employee_id = ${id} order by t.effective_from desc, t.created_at desc`;
-    return { e, p: p ?? {}, terms, minDate: e.hire_date }; // past dates allowed; the DB refuses changes that would alter a locked week (009)
+    const contributions=await tx<{effective_month:string;sss:number;philhealth:number;pagibig:number}[]>`select effective_month::text,sss,philhealth,pagibig from employee_contribution_terms where employee_id=${id} order by effective_month desc`;
+    return { e, p: p ?? {}, terms, contributions,minDate: e.hire_date }; // past dates allowed; the DB refuses changes that would alter a locked week (009)
   });
   if (!data) notFound();
   const { e, p, terms, minDate } = data;
   const isOwner = user.role === "owner";
 
-  const tabs = [["profile", "Profile"], ["private", "Government & bank"], ["terms", "Pay terms"]];
+  const tabs = [["profile", "Profile"], ["private", "Government & bank"], ["terms", "Pay terms"],["contributions","Employer contributions"]];
   return (
     <>
       <Link href="/employees" className="text-sm text-brand-700 hover:underline">← Employees</Link>
@@ -60,6 +63,7 @@ export default async function EmployeePage({ params, searchParams }: PageProps<"
         ))}
       </nav>
 
+      {tab==='contributions'&&<section className="space-y-4"><h2 className="text-lg font-semibold">Employer government contributions</h2>{data.contributions.map(t=><div key={t.effective_month} className="rounded-md border border-border p-3"><p>Effective {formatDate(t.effective_month)} · repeats monthly until changed</p><p>SSS {formatMoney(t.sss)} · PhilHealth {formatMoney(t.philhealth)} · Pag-IBIG {formatMoney(t.pagibig)}</p></div>)}{!data.contributions.length&&<p>No contribution amounts configured.</p>}{isOwner?<ContributionForm employeeId={id} amounts={data.contributions[0]}/>:<p>Only an administrator can change employer contributions.</p>}</section>}
       {tab === "profile" && (
         <div className="space-y-8">
           <EmployeeForm mode="edit" isOwner={user.role === "owner"}

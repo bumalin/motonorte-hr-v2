@@ -35,7 +35,7 @@ test("E2E-HIST-02 owner reopens the latest locked week with a reason, and adds b
   const dlg = page.getByRole("dialog");
   await dlg.getByLabel("Reason").fill("Missed overtime");
   await dlg.getByRole("button", { name: "Reopen", exact: true }).click();
-  await expect(page.getByText("Reopened by the Owner: Missed overtime")).toBeVisible();
+  await expect(page.getByText("Reopened by the Owner: Missed overtime").first()).toBeVisible();
 
   await page.goto("/week/2026-11-02?tab=adjustments");
   await page.getByLabel("Employee").selectOption({ label: "M001 · Dan Garcia (sample)" });

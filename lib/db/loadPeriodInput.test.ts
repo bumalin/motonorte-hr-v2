@@ -7,8 +7,9 @@ import { loadPeriodInput } from "./loadPeriodInput.ts";
 import { PG_TYPES } from "./client.ts";
 import { computeWeek } from "../payroll/engine.ts";
 import { inputHash } from "../payroll/hash.ts";
+import {requireDisposableDatabase} from './testSafety.ts';
 
-const url = process.env.DATABASE_URL_OWNER;
+const url = process.env.DATABASE_URL_OWNER ? requireDisposableDatabase(process.env.DATABASE_URL_OWNER,'motonorte_integrity_test') : undefined;
 const WEEK = "2030-01-07"; // a Monday far from any real data
 
 test("F07 end-to-end from the database", { skip: !url && "DATABASE_URL_OWNER not set" }, async () => {

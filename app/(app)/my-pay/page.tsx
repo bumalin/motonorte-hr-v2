@@ -1,4 +1,5 @@
 import Link from "next/link";
+import {EmployerContributions} from '@/components/employer-contributions.tsx';
 import {hasTab} from "@/lib/auth/tabs.ts";
 import {requireTab} from "@/lib/auth/session.ts";
 import {withUser} from "@/lib/db/client.ts";
@@ -64,6 +65,7 @@ export default async function MyPay(){
      <strong className="font-mono">{formatMoney(w.net)}</strong>
     </summary>
     <dl className="portal-breakdown">{([["Basic / base",w.base],["Overtime",w.ot],["Incentives",w.incentive],["Allowances",w.allowances],["Gross",w.gross],["Deductions + carried in",w.deductions+w.carriedIn],["Net pay",w.net],["Recorded payment",w.paid],["Balance carried forward",w.carryOut]] as const).map(([label,n])=><div key={label}><dt>{label}</dt><dd>{formatMoney(n)}</dd></div>)}</dl>
+    <EmployerContributions allocations={w.contributions}/>
     <h3 className="mt-4">How it was calculated</h3>
     <ul className="text-sm space-y-2 mt-2">{w.items.map((i,n)=><li key={n}>{i.detail} · {formatMoney(i.amount)}</li>)}</ul>
     {hasTab(user,"payslips")&&<Link className="portal-button inline-block mt-4" href={`/my-payslips?from=${w.payday}&to=${w.payday}`}>Request payslip PDF</Link>}

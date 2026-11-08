@@ -21,7 +21,7 @@ test("E2E-AUTH-02 wrong password gets the generic message", async ({ page }) => 
 test("E2E-AUTH-03 sign in shows role badge; sign out ends the session server-side", async ({ page, context }) => {
   await login(page, "staff");
   await expect(page.locator("header")).toContainText("E2E Staff");
-  await expect(page.locator("header")).toContainText("staff");
+  await expect(page.locator("header")).toContainText("CUSTOM ACCESS");
   const before = (await context.cookies()).find((c) => c.name === "mn_session");
   expect(before).toBeTruthy();
 

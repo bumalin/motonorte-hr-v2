@@ -1,12 +1,17 @@
 import Link from "next/link";
+import {contributionReport} from '@/lib/contributions/reports.ts';
+import {ContributionBudget} from '@/components/contribution-budget.tsx';
+import {validMonth} from '@/lib/db/reports.ts';
 import { requireTab } from "@/lib/auth/session.ts";
 import { withUser } from "@/lib/db/client.ts";
+import { hasTab } from "@/lib/auth/tabs.ts";
+import { payrollTotals } from "@/lib/db/reports.ts";
 import { formatMoney, formatWeek, periodStartOf, todayManila } from "@/lib/format.ts";
 import { EmptyState, StatusChip } from "@/components/ui.tsx";
 import { ApprovalsPanel } from "@/components/approvals-panel.tsx";
 import { PayrollChart, type WeekTotals } from "./payroll-chart.tsx";
 
-// S-02 Dashboard — US-050. Figures come from LOCKED runs only; the header chip shows this calendar week's run status.
+// S-02 Dashboard — US-050 (+ all-time totals). Figures come from LOCKED runs only; the header chip shows this calendar week's run status.
 type Kpi = { net: number; incentive: number; jobs: number; rate: number | null };
 
 function Tile({ label, value, prev, fmt, points = false }: { label: string; value: number | null; prev: number | null; fmt: (n: number) => string; points?: boolean }) {
@@ -30,14 +35,17 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
   const user = await requireTab("dashboard");
   const sp = await searchParams;
   const thisWeek = periodStartOf(todayManila());
+  const benefitMonth=typeof sp.benefitMonth==='string'&&validMonth(sp.benefitMonth)?sp.benefitMonth:todayManila().slice(0,7);
   const data = await withUser(user.id, async (tx) => {
+    const benefitBudget = await contributionReport(tx, benefitMonth + '-01');
     const thisStatus = (await tx<{ status: string }[]>`select status from payroll_runs where period_start = ${thisWeek}`)[0]?.status ?? "open";
     const weeks = await tx<WeekTotals[]>`
       select r.period_start::text, sum(l.base)::bigint as base, sum(l.ot)::bigint as ot, sum(l.incentive)::bigint as incentive, sum(l.net)::bigint as net
       from payroll_runs r join payroll_lines l on l.run_id = r.id
       where r.status = 'locked' group by r.period_start order by r.period_start desc limit 12`;
+    const all = (await payrollTotals(tx, null, null)).reduce((t, r) => ({ incentive: t.incentive + r.incentive, net: t.net + r.net }), { incentive: 0, net: 0 });
     const chosen = typeof sp.week === "string" && weeks.some((w) => w.period_start === sp.week) ? sp.week : weeks[0]?.period_start;
-    if (!chosen) return { weeks, chosen: null, thisStatus };
+    if (!chosen) return { weeks, chosen: null, thisStatus, all, benefitBudget };
     const prev = weeks[weeks.findIndex((w) => w.period_start === chosen) + 1]?.period_start ?? null;
     const kpi = async (start: string | null): Promise<Kpi | null> => {
       if (!start) return null;
@@ -60,7 +68,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
         sum(l.qty * (select a.amount from catalog_amounts a where a.job_id = j.id and a.effective_from <= l.date order by a.effective_from desc limit 1))::bigint as amount
       from job_log l join catalog_jobs j on j.id = l.job_id
       where l.date between ${chosen} and ${chosen}::date + 6 group by j.id order by amount desc limit 5`;
-    return { weeks, chosen, thisStatus, cur: await kpi(chosen), prev: await kpi(prev), mechanics, topJobs };
+    return { weeks, chosen, thisStatus, all, benefitBudget, cur: await kpi(chosen), prev: await kpi(prev), mechanics, topJobs };
   });
 
   const peso = (n: number) => formatMoney(Math.round(n / 100) * 100).replace(/\.00$/, ""); // whole pesos, rounded
@@ -80,11 +88,25 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
         )}
       </div>
       <ApprovalsPanel user={user} />
+      <section className="mb-6 space-y-3 rounded-md border border-border p-4"><h2 className="font-semibold">Employer government contributions</h2><form className="flex flex-wrap items-end gap-3"><label>Benefit month<input type="month" name="benefitMonth" defaultValue={benefitMonth} className="block rounded-md border border-border p-2"/></label>{typeof sp.week==='string'&&<input type="hidden" name="week" value={sp.week}/>}<button className="border border-border p-2 rounded-md">Show</button>{hasTab(user,'reports')&&<Link className="underline" href={`/reports/contributions?month=${benefitMonth}`}>Open contribution report →</Link>}</form>{benefitMonth<'2026-11'&&<p className="text-sm">Recording starts November 2026.</p>}<ContributionBudget data={data.benefitBudget}/></section>
 
       {!data.chosen ? (
         <EmptyState title="No locked payroll yet." action={{ href: `/week/${thisWeek}`, label: "Start with This week →" }} />
       ) : (
         <div className="space-y-6">
+          <section aria-labelledby="all-time" className="space-y-2">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 id="all-time" className="font-medium">All approved payroll to date</h2>
+              {hasTab(user, "reports") && <Link href="/reports" className="text-sm text-brand-700 hover:underline">By employee or date range →</Link>}
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {([["Total net payroll", data.all.net], ["Total incentives", data.all.incentive]] as const).map(([label, v]) => (
+                <div key={label} className="rounded-md border border-border bg-surface p-4"><p className="text-sm text-text-muted">{label}</p><p className="mt-1 text-2xl font-semibold tabular">{formatMoney(v)}</p></div>
+              ))}
+            </div>
+          </section>
+
+          <h2 className="font-medium">Week of {formatWeek(data.chosen)}</h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <Tile label="Net payroll" value={data.cur!.net} prev={data.prev?.net ?? null} fmt={peso} />
             <Tile label="Incentives paid" value={data.cur!.incentive} prev={data.prev?.incentive ?? null} fmt={peso} />

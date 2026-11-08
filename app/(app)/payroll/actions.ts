@@ -11,6 +11,8 @@ import { computeWeek } from "@/lib/payroll/engine.ts";
 import { inputHash } from "@/lib/payroll/hash.ts";
 import { periodStartOf } from "@/lib/format.ts";
 import type { PayrollError } from "@/lib/payroll/types.ts";
+import {calculateContributions} from '@/lib/contributions/calculate.ts';
+import {databaseAllocations} from '@/lib/contributions/data.ts';
 
 export type GenerateState = { error?: string; errors?: PayrollError[] } | undefined;
 
@@ -30,9 +32,10 @@ export async function generateDraft(_: GenerateState, form: FormData): Promise<G
         deductions: l.deductions, carried_in: l.carriedIn, gross: l.gross, net: l.net, carry_out: l.carryOut,
       }));
       const items = r.items.map((i) => ({ employee_id: i.employeeId, date: i.date, kind: i.kind, amount: i.amount, rule_id: i.ruleId, source: i.source }));
-      const snapshot = { settings: input.settings, catalog: input.catalog, holidays: input.holidays };
+      const contributions=databaseAllocations((input.contributionInputs??[]).flatMap(calculateContributions));
+      const snapshot = { settings: input.settings, catalog: input.catalog, holidays: input.holidays,contributionsVersion:1 };
       const [{ id }] = await tx<{ id: string }[]>`
-        select save_draft(${start.data}, ${inputHash(input)}, ${JSON.stringify(snapshot)}::text::jsonb, ${JSON.stringify(lines)}::text::jsonb, ${JSON.stringify(items)}::text::jsonb) as id`;
+        select save_draft_with_contributions(${start.data}, ${inputHash(input)}, ${JSON.stringify(snapshot)}::text::jsonb, ${JSON.stringify(lines)}::text::jsonb, ${JSON.stringify(items)}::text::jsonb,${JSON.stringify(contributions)}::text::jsonb) as id`;
       return { id };
     });
     if ("errors" in result) return { errors: result.errors };

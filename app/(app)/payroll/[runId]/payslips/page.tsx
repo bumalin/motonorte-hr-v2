@@ -1,4 +1,6 @@
 import Link from "next/link";
+import {loadRunContributions} from '@/lib/contributions/data.ts';
+import {contributionsUnrecorded} from '@/lib/contributions/types.ts';
 import { notFound } from "next/navigation";
 import { requireTab } from "@/lib/auth/session.ts";
 import { withUser } from "@/lib/db/client.ts";
@@ -9,7 +11,7 @@ import {PrintablePayslip} from "./printable-payslip.tsx";
 import "./print.css";
 
 // S-09 Payslips — US-034. Locked runs only; one A4 page per employee; browser "Save as PDF" (ADR-004).
-type Line = { employee_id: string; code: string; full_name: string; position: string | null; hire_date: string; base: number; ot: number; incentive: number;
+type Line = { contribution_coverage:string;employee_id: string; code: string; full_name: string; position: string | null; hire_date: string; base: number; ot: number; incentive: number;
   allowances: number; deductions: number; carried_in: number; gross: number; net: number; carry_out: number };
 
 export default async function PayslipsPage({ params, searchParams }: PageProps<"/payroll/[runId]/payslips">) {
@@ -23,7 +25,7 @@ export default async function PayslipsPage({ params, searchParams }: PageProps<"
     if (!run) return null;
     const lines = await tx<Line[]>`
       select l.employee_id, e.code, e.full_name, e.hire_date::text, (select t.position from pay_terms t where t.employee_id = e.id and t.status = 'approved' and t.effective_from <= r.period_start + 6 order by t.effective_from desc limit 1) as position,
-        l.base, l.ot, l.incentive, l.allowances, l.deductions, l.carried_in, l.gross, l.net, l.carry_out
+        l.base, l.ot, l.incentive, l.allowances, l.deductions, l.carried_in, l.gross, l.net, l.carry_out,l.contribution_coverage
       from payroll_lines l join employees e on e.id = l.employee_id join payroll_runs r on r.id = l.run_id
       where l.run_id = ${runId} order by e.code`;
     const items = await tx<RunItem[]>`select employee_id, date::text, kind, amount, rule_id, source from payroll_items where run_id = ${runId} order by date nulls last, id`;
@@ -31,7 +33,7 @@ export default async function PayslipsPage({ params, searchParams }: PageProps<"
     const rest = await tx<{ employee_id: string; date: string }[]>`
       select employee_id, date::text from attendance
       where status = 'R' and date between ${run.period_start}::date and ${run.period_start}::date + 6 order by date`;
-    return { run, lines, items, rest };
+    return { run, lines, items, rest,contributions:await loadRunContributions(tx,runId) };
   });
   if (!data) notFound();
   const { run, lines, items, rest } = data;
@@ -62,6 +64,6 @@ export default async function PayslipsPage({ params, searchParams }: PageProps<"
         <PrintButton />
       </div>
 
-      <div className="print-slip-preview">{shown.map(l=><PrintablePayslip key={l.employee_id} line={l} period={run.period_start} payday={payday} locked={run.locked_at?todayManila(run.locked_at):payday} preparedBy={user.fullName} items={items.filter(i=>i.employee_id===l.employee_id)} restDays={rest.filter(r=>r.employee_id===l.employee_id).map(r=>formatDay(r.date))}/>)}</div>    </>
+      <div className="print-slip-preview">{shown.map(l=><PrintablePayslip key={l.employee_id} contributions={contributionsUnrecorded(l.contribution_coverage)?null:data.contributions?.filter(c=>c.employeeId===l.employee_id)??null} line={l} period={run.period_start} payday={payday} locked={run.locked_at?todayManila(run.locked_at):payday} preparedBy={user.fullName} items={items.filter(i=>i.employee_id===l.employee_id)} restDays={rest.filter(r=>r.employee_id===l.employee_id).map(r=>formatDay(r.date))}/>)}</div>    </>
   );
 }

@@ -19,6 +19,24 @@ export function thirteenthMonth(tx: Tx, year: number) {
     where t.year = ${year} order by e.code`;
 }
 
+export type TotalsRow = { code: string; full_name: string; weeks: number; gross: number; incentive: number; net: number };
+
+/** Approved (locked) payroll per employee, by payday; `from`/`to` null = no limit (all time). */
+export function payrollTotals(tx: Tx, from: string | null, to: string | null) {
+  return tx<TotalsRow[]>`
+    select e.code, e.full_name, count(*)::int as weeks, sum(l.gross)::bigint as gross, sum(l.incentive)::bigint as incentive, sum(l.net)::bigint as net
+    from payroll_lines l join payroll_runs r on r.id = l.run_id join employees e on e.id = l.employee_id
+    where r.status = 'locked' and (${from}::date is null or r.payday >= ${from}::date) and (${to}::date is null or r.payday <= ${to}::date)
+    group by e.code, e.full_name order by e.code`;
+}
+
+/** Optional "YYYY-MM-DD" filter value: real calendar date → itself, blank/invalid → null. */
+export function optionalDate(s: unknown): string | null {
+  if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const d = new Date(`${s}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(s) ? s : null;
+}
+
 /** RFC 4180 CSV; money as pesos with 2 decimals. Cells starting with = + - @ are prefixed to stop spreadsheet formula injection. */
 export function toCsv(header: string[], rows: (string | number)[][]): string {
   const cell = (v: string | number) => {

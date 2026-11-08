@@ -1,4 +1,5 @@
 import type {PayWeek} from "./types.ts";
+import {summarizeContributions} from '../contributions/summary.ts';
 export function isWholeMonth(start:string,end:string):boolean{
  if(!start.endsWith("-01"))return false;
  const [year,month]=start.split("-").map(Number);
@@ -13,7 +14,7 @@ export function summarizeRange(start:string,end:string,source:PayWeek[]){
  const paydays:string[]=[];const first=new Date(start+"T00:00:00Z");first.setUTCDate(first.getUTCDate()+(7-first.getUTCDay())%7);
  for(const day=new Date(first);day.toISOString().slice(0,10)<=end;day.setUTCDate(day.getUTCDate()+7))paydays.push(day.toISOString().slice(0,10));
  const included=new Set(weeks.map(w=>w.payday));
- return {wholeMonth:isWholeMonth(start,end),rangeStart:start,rangeEnd:end,approvedWeeks:weeks.length,
+ return {contributions:summarizeContributions(weeks),wholeMonth:isWholeMonth(start,end),rangeStart:start,rangeEnd:end,approvedWeeks:weeks.length,
   base:sum("base"),ot:sum("ot"),incentive:sum("incentive"),allowances:sum("allowances"),gross:sum("gross"),deductions:sum("deductions"),carriedIn:sum("carriedIn"),net:sum("net"),paid:sum("paid"),
   closingCarriedForward:[...weeks].sort((a,b)=>b.payday.localeCompare(a.payday))[0]?.carryOut??0,
   daysPaid:weeks.length&&weeks.every(w=>w.daysPaid!==undefined)?weeks.reduce((n,w)=>n+w.daysPaid!,0):undefined,

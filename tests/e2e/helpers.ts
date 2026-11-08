@@ -15,6 +15,6 @@ export async function login(page: Page, role: Role) {
 /** Owner connection to the e2e database, for assertions only (the app itself connects as app_user). */
 export function e2eSql() {
   const url = process.env.E2E_DATABASE_URL_OWNER!;
-  if (new URL(url).pathname !== "/motonorte_e2e") throw new Error("not the e2e database");
+  if (new URL(url).pathname !== "/motonorte_e2e_test") throw new Error("not the e2e database");
   return postgres(url, { max: 1, onnotice: () => {} });
 }

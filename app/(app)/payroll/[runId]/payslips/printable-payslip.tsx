@@ -1,8 +1,11 @@
 import Image from "next/image";
+import {BENEFITS,BENEFIT_LABELS,type ContributionAllocation} from '@/lib/contributions/types.ts';
+import {summarizeContributions} from '@/lib/contributions/summary.ts';
 import {formatDate,formatMoney,formatWeek,positionLabel} from "@/lib/format.ts";
 import {describeItem,type RunItem} from "@/lib/payroll/describe.ts";
 type SlipLine={employee_id:string;code:string;full_name:string;position:string|null;hire_date:string;base:number;ot:number;incentive:number;allowances:number;deductions:number;carried_in:number;carry_out:number;gross:number;net:number};
-export function PrintablePayslip({line:l,period,payday,locked,preparedBy,items,restDays}:{line:SlipLine;period:string;payday:string;locked:string;preparedBy:string;items:RunItem[];restDays:string[]}){
+export function PrintablePayslip({line:l,period,payday,locked,preparedBy,items,restDays,contributions}:{line:SlipLine;period:string;payday:string;locked:string;preparedBy:string;items:RunItem[];restDays:string[];contributions:ContributionAllocation[]|null}){
+ const benefits=summarizeContributions([{contributions}]);
  const base=items.filter(i=>i.kind==="base");
  const rates=[...new Set(base.map(i=>Number(i.source.dailyRate)).filter(Number.isFinite))];
  const days=base.length?base.reduce((n,i)=>n+(i.source.status==="F"?1:i.source.status==="H"?0.5:0),0):undefined;
@@ -13,12 +16,13 @@ export function PrintablePayslip({line:l,period,payday,locked,preparedBy,items,r
  return <div className="print-slip-group">
  <article className="print-slip">
  {brand}
- <div className="print-slip-content">
+ <div className={"print-slip-content"+(contributions?" print-slip-has-contributions":"")}>
  <section className="print-slip-person"><div><span className="print-slip-label">PAID TO</span><h2>{l.full_name}</h2><p>{l.position?positionLabel(l.position)+" · ":""}Employee <b>{l.code}</b> · With MotoNorte since {formatDate(l.hire_date)}</p></div><dl><div><dt>Pay period</dt><dd>{formatWeek(period)}</dd></div><div><dt>Payday</dt><dd>{formatDate(payday)}</dd></div><div><dt>Daily rate</dt><dd>{rate===undefined?"See calculation detail":formatMoney(rate)}</dd></div><div><dt>Day off taken</dt><dd>{restDays.join(", ")||"None recorded"}</dd></div></dl></section>
  <section className="print-slip-net"><div><span><strong>NET PAY</strong><small>Take-home for this pay period</small></span><b>{formatMoney(l.net)}</b></div><aside><span>DAYS PAID</span><strong>{days??"—"}</strong></aside></section>
  <section>{heading("EARNINGS")}{row("Basic pay",days!==undefined&&rate!==undefined&&l.base===Math.round(days*rate)?days+" days × "+formatMoney(rate):"See frozen calculation detail",l.base)}{row("Overtime","Approved overtime",l.ot)}{row("Incentives","Shared pool + personal jobs",l.incentive)}{row("Allowances","Approved allowances",l.allowances)}{row("Gross pay","",l.gross,true)}</section>
  <section>{heading("DEDUCTIONS")}{row("Deductions",l.deductions?"Approved deductions":"None this pay period",l.deductions)}{row("Carried in / out","In "+formatMoney(l.carried_in)+" / Out "+formatMoney(l.carry_out),l.carried_in)}</section>
  <div className="print-slip-equation">{formatMoney(l.gross)} gross − {formatMoney(l.deductions+l.carried_in)} deductions = <strong>{formatMoney(l.net)} net</strong>{l.carry_out>0&&<small>{formatMoney(l.carry_out)} carried forward</small>}</div>
+ {contributions&&<section className="print-slip-contributions"><strong>Employer government contributions · excluded from net pay</strong><p>{BENEFITS.map(k=>`${BENEFIT_LABELS[k]} ${formatMoney(benefits[k])}`).join(' · ')}</p><small>Benefit month: {benefits.benefitMonths.map(m=>m.slice(0,7)).join(', ')||'—'} · Allocation does not confirm remittance.</small></section>}
  <section className="print-slip-signatures"><div><i/><strong>Prepared by: {preparedBy}</strong><span>Payroll locked {formatDate(locked)}</span></div><div><i/><strong>Received by: {l.full_name}</strong><span>Date: ____________________</span></div></section>
  <p className="print-slip-note">System-generated payslip from MotoNorte HR &amp; Payroll. Keep it for your records. Questions? Talk to the Administrator.</p>
  </div>

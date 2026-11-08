@@ -1,6 +1,7 @@
 // Builds the pay engine's PeriodInput for one week from the DB (TASK-014). Every list is ordered, so the
 // input — and its hash — is deterministic. Money (bigint) arrives as exact JS numbers via PG_TYPES in client.ts.
 import type { Tx } from "./client.ts";
+import {loadContributionInputs} from '../contributions/data.ts';
 import { effective } from "../payroll/engine.ts";
 import type { PeriodInput, Settings, DayStatus, Position, Weekday } from "../payroll/types.ts";
 
@@ -67,6 +68,7 @@ export async function loadPeriodInput(tx: Tx, periodStart: string): Promise<Peri
   const jobs = jobRows.map(({ employeeId, ...j }) => (employeeId ? { ...j, employeeId } : j));
 
   return {
+    contributionInputs:await loadContributionInputs(tx,periodStart),
     periodStart,
     settings: mergeSettings(settingsRows),
     holidays: holidays.map((h) => h.date),

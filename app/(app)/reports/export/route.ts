@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/lib/auth/session.ts";
 import { hasTab } from "@/lib/auth/tabs.ts";
 import { withUser } from "@/lib/db/client.ts";
-import { monthlySummary, pesos, thirteenthMonth, toCsv, validMonth, validYear } from "@/lib/db/reports.ts";
+import { monthlySummary, optionalDate, payrollTotals, pesos, thirteenthMonth, toCsv, validMonth, validYear } from "@/lib/db/reports.ts";
 
 export async function GET(req: NextRequest) {
   const user = await getSession();
@@ -27,6 +27,13 @@ export async function GET(req: NextRequest) {
     const rows = await withUser(user.id, (tx) => thirteenthMonth(tx, year));
     const csv = toCsv(["Code", "Name", "Total basic", "13th month"], rows.map((r) => [r.code, r.full_name, pesos(r.total_basic), pesos(r.thirteenth)]));
     return csvResponse(csv, `motonorte-13th-month-${year}.csv`);
+  }
+  if (kind === "totals") {
+    const from = optionalDate(p.get("from")), to = optionalDate(p.get("to"));
+    const rows = await withUser(user.id, (tx) => payrollTotals(tx, from, to));
+    const csv = toCsv(["Code", "Name", "Approved weeks", "Total payroll (gross)", "Total incentives", "Total net pay"],
+      rows.map((r) => [r.code, r.full_name, r.weeks, pesos(r.gross), pesos(r.incentive), pesos(r.net)]));
+    return csvResponse(csv, `motonorte-payroll-totals-${from ?? "start"}-to-${to ?? "today"}.csv`);
   }
   return new NextResponse("Unknown report", { status: 400 });
 }

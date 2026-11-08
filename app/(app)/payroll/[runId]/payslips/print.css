@@ -16,6 +16,10 @@
 .print-slip-header b{font-family:SlipBarlow,sans-serif;font-size:44px;line-height:1;letter-spacing:.04em;background:#e30613;padding:4px 18px;transform:skewX(-6deg)}
 .print-slip-header img{display:block}
 .print-slip-content{padding:26px 48px 0;display:flex;flex:1;flex-direction:column;gap:18px}
+.print-slip-content.print-slip-has-contributions{gap:12px}
+.print-slip-contributions{font-size:11px;line-height:1.5;border-top:1px solid #bdbdbd;padding-top:6px}
+.print-slip-contributions p{margin:0}
+@media print{.skip-link{display:none!important}}
 .print-slip-person{display:flex;gap:20px;justify-content:space-between;border-bottom:2px solid #1a1a1a;padding-bottom:16px}
 .print-slip-person>div{flex:1;min-width:0}
 .print-slip-label{font-family:SlipMono,monospace;font-size:12px;letter-spacing:.2em;color:#6e6e6e}

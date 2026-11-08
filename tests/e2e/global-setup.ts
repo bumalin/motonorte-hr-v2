@@ -5,20 +5,20 @@ import { execFileSync } from "node:child_process";
 
 export default async function globalSetup() {
   const owner = process.env.E2E_DATABASE_URL_OWNER;
-  if (!owner || new URL(owner).pathname !== "/motonorte_e2e") throw new Error("E2E_DATABASE_URL_OWNER must point at motonorte_e2e");
+  if (!owner || new URL(owner).pathname !== "/motonorte_e2e_test") throw new Error("E2E_DATABASE_URL_OWNER must point at motonorte_e2e_test");
 
   const admin = new URL(owner);
   admin.pathname = "/postgres";
   const sql = postgres(admin.toString(), { max: 1, onnotice: () => {} });
   try {
-    const [{ exists }] = await sql`select exists (select 1 from pg_database where datname = 'motonorte_e2e') as exists`;
-    if (!exists) await sql.unsafe("create database motonorte_e2e");
-    await sql.unsafe("revoke temporary on database motonorte_e2e from public");
+    const [{ exists }] = await sql`select exists (select 1 from pg_database where datname = 'motonorte_e2e_test') as exists`;
+    if (!exists) await sql.unsafe("create database motonorte_e2e_test");
+    await sql.unsafe("revoke temporary on database motonorte_e2e_test from public");
   } finally {
     await sql.end();
   }
 
-  const env = { ...process.env, DATABASE_URL_OWNER: owner };
+  const env = { ...process.env, DATABASE_URL_OWNER: owner, ALLOW_TEST_DATABASE_RESET:'1' };
   const run = (...args: string[]) => execFileSync(process.execPath, args, { env, stdio: "pipe" });
   run("db/migrate.ts", "--reset");
   run("db/run-sql.ts", "db/seed.sql");

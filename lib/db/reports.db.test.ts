@@ -3,11 +3,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import postgres from "postgres";
+import {requireDisposableDatabase} from './testSafety.ts';
 import { PG_TYPES } from "./client.ts";
 import { monthlySummary, thirteenthMonth } from "./reports.ts";
 import { thirteenthMonth as engineThirteenth } from "../payroll/thirteenth.ts";
 
-const url = process.env.DATABASE_URL_OWNER;
+const url = process.env.DATABASE_URL_OWNER ? requireDisposableDatabase(process.env.DATABASE_URL_OWNER,'motonorte_integrity_test') : undefined;
 
 test("monthly summary + 13th month: locked only, payday attribution, rounding matches engine",
   { skip: !url && "DATABASE_URL_OWNER not set" }, async () => {

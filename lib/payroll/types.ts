@@ -61,6 +61,7 @@ export interface Adjustment {
 }
 
 export interface PeriodInput {
+  contributionInputs?: import('../contributions/types.ts').ContributionInput[];
   periodStart: IsoDate; // a Monday
   settings: Settings[]; // effective-dated
   holidays: IsoDate[];

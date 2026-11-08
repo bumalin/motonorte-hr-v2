@@ -10,7 +10,7 @@ function e2eUrl(name: string): string {
   const v = process.env[name];
   if (!v) throw new Error(`${name} is not set (.env)`);
   const u = new URL(v);
-  u.pathname = "/motonorte_e2e";
+  u.pathname = "/motonorte_e2e_test";
   return u.toString();
 }
 process.env.E2E_DATABASE_URL = e2eUrl("DATABASE_URL");
@@ -32,7 +32,7 @@ export default defineConfig({
     trace: "off", // traces would record the typed passwords
     screenshot: "only-on-failure",
   },
-  webServer: {
+  webServer: process.env.E2E_EXTERNAL_SERVER==='1'?undefined:{
     // Production build + start, pointed at the e2e database (process env wins over .env in Next).
     command: `npx next build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}/login`,

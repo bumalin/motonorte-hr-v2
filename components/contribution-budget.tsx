@@ -1,0 +1,7 @@
+import {formatMoney} from '@/lib/format.ts';import {BENEFITS,BENEFIT_LABELS} from '@/lib/contributions/types.ts';import type {contributionReport} from '@/lib/contributions/reports.ts';
+export function ContributionBudget({data}:{data:Awaited<ReturnType<typeof contributionReport>>}){
+ const {totals}=data;
+ return <><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr><th className="p-2 text-left">Employer contribution</th><th className="p-2 text-right">Planned month</th><th className="p-2 text-right">Approved so far</th><th className="p-2 text-right">Remaining allocation</th></tr></thead><tbody>{[...BENEFITS,'total' as const].map(k=><tr key={k} className="border-t border-border"><th className="p-2 text-left">{k==='total'?'Combined':BENEFIT_LABELS[k]}</th>{(['planned','approved','remaining'] as const).map(f=><td key={f} className="p-2 text-right font-mono">{formatMoney(k==='total'?BENEFITS.reduce((n,b)=>n+totals[f][b],0):totals[f][k])}</td>)}</tr>)}</tbody></table></div>
+ {!!totals.unconfigured&&<p role="status" className="text-sm">Partial planned budget: {totals.unconfigured} eligible employee(s) have no configured amounts.</p>}{!!totals.legacyWeeks&&<p className="text-sm">Incomplete recorded coverage: {totals.legacyWeeks} approved employee-week(s) have no contribution metadata.</p>}
+ <p className="text-xs text-text-muted">Fully employer-funded; excluded from gross and net pay. Approved allocations do not confirm agency remittance.</p></>;
+}

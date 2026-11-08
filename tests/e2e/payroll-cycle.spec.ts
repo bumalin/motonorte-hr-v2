@@ -296,7 +296,7 @@ test.beforeEach(() => ensureLocked(WEEK));
 
 test("E2E-LOCK-01 the locked week is read-only (US-023)", async () => {
   await staff.goto(`/week/${WEEK}`);
-  await expect(staff.getByText("This week is locked. Changes go in as adjustments on a later week.")).toBeVisible();
+  await expect(staff.getByText(/This week is locked\./)).toBeVisible();
   await expect(staff.getByRole("button", { name: "Generate payroll draft" })).toHaveCount(0);
   await expect(staff.getByRole("button", { name: /Fill empty cells/ })).toHaveCount(0);
   for (const s of await staff.locator("tbody select").all()) await expect(s).toBeDisabled();
@@ -311,27 +311,28 @@ test("E2E-LOCK-01 the locked week is read-only (US-023)", async () => {
 test("E2E-SLIP-01 payslips render one per employee with itemized incentives (US-034)", async () => {
   const runId = await runOf(WEEK);
   await staff.goto(`/payroll/${runId}/payslips`);
-  const slips = staff.locator("article.payslip");
+  const slips = staff.locator("article.print-slip");
   await expect(slips).toHaveCount(6);
   const m001 = slips.filter({ hasText: "Dan Garcia" });
-  await expect(m001).toContainText("Payday Oct 11, 2026");
-  await expect(m001).toContainText("Thu Oct 8 — Pool ₱200.00 (1× CARB ₱200.00) ÷ 3 (M001, M002, M003)");
-  await expect(m001).toContainText("Mon Oct 5 — 2 h OT");
-  await expect(m001).toContainText("Rest day: Sun Oct 11");
-  await expect(m001.locator("p.text-2xl")).toHaveText(peso(FINAL_NET.M001));
+  await expect(m001).toContainText("Oct 11, 2026");
+  const m001Detail=staff.locator('article.print-slip-detail').filter({hasText:'Dan Garcia'});
+  await expect(m001Detail).toContainText("Thu Oct 8 — Pool ₱200.00 (1× CARB ₱200.00) ÷ 3 (M001, M002, M003)");
+  await expect(m001Detail).toContainText("Mon Oct 5 — 2 h OT");
+  await expect(m001).toContainText("Sun Oct 11");
+  await expect(m001.locator(".print-slip-net b")).toHaveText(peso(FINAL_NET.M001));
   const s002 = slips.filter({ hasText: "Ben Cruz" });
-  await expect(s002).toContainText("Cash advance — Cash advance Oct 7");
-  await expect(s002.locator("p.text-2xl")).toHaveText(peso(FINAL_NET.S002));
+  await expect(staff.locator('article.print-slip-detail').filter({hasText:'Ben Cruz'})).toContainText("Cash advance — Cash advance Oct 7");
+  await expect(s002.locator(".print-slip-net b")).toHaveText(peso(FINAL_NET.S002));
   await expect(staff.getByRole("button", { name: /Print/ })).toBeVisible();
 });
 
 test("E2E-REP-01 reports show the locked run: monthly summary and 13th month (US-040, US-041)", async () => {
   await staff.goto("/reports?month=2026-10&year=2026");
-  const monthly = staff.locator("section").first();
+  const monthly = staff.locator("section").filter({has:staff.getByRole('heading',{name:'Monthly summary',exact:true})});
   await expect(monthly.locator("tfoot")).toContainText(peso(total(FINAL_NET)));
   await expect(monthly.locator("tbody tr", { hasText: "M003" })).toContainText("₱100.00");
   // 13th month: M003 basic = 5 × 600 + 300 = ₱3,300.00 → ÷ 12 = ₱275.00 (incentives, OT, allowances excluded)
-  const t13 = staff.locator("section").nth(1).locator("tbody tr", { hasText: "M003" });
+  const t13 = staff.locator("section").filter({has:staff.getByRole('heading',{name:'13th month pay',exact:true})}).locator("tbody tr", { hasText: "M003" });
   await expect(t13).toContainText("₱3,300.00");
   await expect(t13).toContainText("₱275.00");
   const csv = await staff.evaluate(async () => {
