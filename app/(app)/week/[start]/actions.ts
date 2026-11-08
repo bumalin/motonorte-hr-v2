@@ -7,7 +7,7 @@ import { hasTab } from "@/lib/auth/tabs.ts";
 import { moveHireEarlier } from "@/lib/db/hireDate.ts";
 import { withUser } from "@/lib/db/client.ts";
 import { dbErrorMessage } from "@/lib/db/errors.ts";
-import { parsePesos, periodStartOf } from "@/lib/format.ts";
+import { otHoursToMinutes, parsePesos, periodStartOf } from "@/lib/format.ts";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -18,13 +18,6 @@ const Cell = z.object({
   otHours: z.string().trim(),
 });
 
-/** Quarter-hour OT in hours ("1.5") → whole minutes, exact. null = invalid. */
-function otMinutes(hours: string): number | null {
-  if (hours === "") return 0;
-  const hundredths = parsePesos(hours); // "1.25" → 125
-  if (hundredths === null || hundredths % 25 !== 0 || hundredths > 1600) return null;
-  return (hundredths * 60) / 100;
-}
 
 /** Saves one grid cell. Empty status clears the entry. Returns an error message or nothing. */
 export async function saveCell(input: { employeeId: string; date: string; status: string; otHours: string }): Promise<string | void> {
@@ -32,8 +25,8 @@ export async function saveCell(input: { employeeId: string; date: string; status
   if (user.role !== "owner") return "Only an administrator can edit attendance.";
   const c = Cell.safeParse(input);
   if (!c.success) return "Invalid entry.";
-  const ot = otMinutes(c.data.otHours);
-  if (ot === null) return "OT must be in quarter hours, e.g. 1.5";
+  const ot = otHoursToMinutes(c.data.otHours);
+  if (ot === null) return "OT must be in half hours, e.g. 1.5 (up to 16)";
   if (ot > 0 && c.data.status !== "F") return "OT is only allowed on full days.";
   try {
     await withUser(user.id, async (tx) => {

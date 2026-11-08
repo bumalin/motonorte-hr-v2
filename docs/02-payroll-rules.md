@@ -71,6 +71,8 @@ Example: ₱650 rate, 120 min → 65000 × 120 × 1.25 ÷ 480 = 20312.5 → **20
 
 **PR-041** OT minutes on a non-`F` day → error `INVALID_OT`.
 
+**PR-042** OT is entered in **half-hour steps** (0.5 h = 30 min), up to 16 h per day (UI and server validation; Owner, 2026-11-08). The engine still calculates from minutes; earlier quarter-hour entries in locked weeks are unaffected.
+
 ## F. Incentives (daily pool)
 
 **PR-050 Catalog.** Incentive jobs have a code, name, amount (centavos), and are **effective-dated**. The amount in effect on the job's date applies.

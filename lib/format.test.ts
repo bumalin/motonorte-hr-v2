@@ -44,3 +44,12 @@ test("Manila today and period start", () => {
   assert.equal(periodStartOf("2026-10-05"), "2026-10-05");
   assert.equal(periodStartOf("2026-10-07"), "2026-10-05");
 });
+
+test("overtime is entered in half hours", async () => {
+  const { otHoursToMinutes } = await import("./format.ts");
+  assert.equal(otHoursToMinutes(""), 0);
+  assert.equal(otHoursToMinutes("0.5"), 30);
+  assert.equal(otHoursToMinutes("1.5"), 90);
+  assert.equal(otHoursToMinutes("16"), 960);
+  for (const bad of ["0.25", "1.75", "16.5", "-1", "x"]) assert.equal(otHoursToMinutes(bad), null);
+});

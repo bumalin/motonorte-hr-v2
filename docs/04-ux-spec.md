@@ -111,7 +111,7 @@ Locked banner (when locked): "This week is locked. Changes go in as adjustments 
 
 **Tab 1: Attendance grid**
 - Rows: active employees (grouped Mechanics · Technicians · Staff). Columns: Mon…Sun with date, plus Total days.
-- Each cell: `<select>` with `— / F Full / H Half / A Absent / R Rest` and a small OT hours input (`type="number" step="0.25" min="0"`, shown only when F). Hours are converted to minutes server-side.
+- Each cell (2026-11-08 redesign): one compact day button showing F / H / A / R (or — when unmarked) plus a `+1.5h` overtime badge. Click or Enter opens a small panel: status buttons, Clear, and an overtime stepper in 0.5 h steps (F only). Keys on a focused day: F/H/A/R set the status, Delete clears, + / − change overtime, arrows move between days, Esc closes. Hours are converted to minutes server-side (PR-042).
 - The rest-day column for each employee is shaded, and `R` is only offered there.
 - Holidays: column header shows a holiday badge with its name.
 - Empty cells show `—` and are flagged amber. **No silent defaults.** The button **Fill empty cells** (F on work days, R on rest day) fills only cells that are still empty, and only when clicked.

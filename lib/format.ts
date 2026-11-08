@@ -58,3 +58,11 @@ export function periodStartOf(iso: string): string {
 export const POSITIONS = [["mechanic", "Mechanic"], ["technician", "Technician"], ["staff", "Staff"]] as const;
 export const POSITION_KEYS = POSITIONS.map(([k]) => k) as ["mechanic", "technician", "staff"];
 export const positionLabel = (p: string | null | undefined) => POSITIONS.find(([k]) => k === p)?.[1] ?? p ?? "—";
+
+/** Overtime entry in half hours ("1.5") → whole minutes (90). "" → 0. null if not a multiple of 0.5 h or over 16 h. */
+export function otHoursToMinutes(hours: string): number | null {
+  if (hours.trim() === "") return 0;
+  const hundredths = parsePesos(hours); // "1.5" → 150
+  if (hundredths === null || hundredths % 50 !== 0 || hundredths > 1600) return null;
+  return (hundredths * 60) / 100;
+}
