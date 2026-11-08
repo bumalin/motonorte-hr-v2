@@ -41,6 +41,7 @@ test('new draft saves authoritative allocations; approval freezes employer value
  assert.equal((await tx`select net from payroll_lines where run_id=${id}`)[0].net,10000);
  await assert.rejects(()=>tx.savepoint(s=>s`update payroll_contributions set sss=1 where run_id=${id}`),/LOCKED/);
  const report=await contributionReport(tx,'2034-11-01');assert.equal(report.totals.approved.sss,c[0].amounts.sss);assert.equal(report.totals.planned.sss,100001);
+ const paidTotal=c[0].amounts.sss+c[0].amounts.philhealth+c[0].amounts.pagibig;assert.deepEqual(report.paid,{month:{count:1,total:paidTotal},allTime:{count:1,total:paidTotal}},'paid cards count approved allocations');
  const snapshot=await documentSnapshot(tx,employee,'2034-11-01','2034-11-30');assert.deepEqual(snapshot.weeks[0].contributions,c);
  const [request]=await tx`insert into payslip_requests(employee_id,range_start,range_end) values(${employee},'2034-11-01','2034-11-30') returning id`;
  const missing=structuredClone(snapshot);delete missing.weeks[0].contributions;

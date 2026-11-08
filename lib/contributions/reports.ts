@@ -21,5 +21,9 @@ export async function contributionReport(tx:Tx,month:string){
  const sum=(field:'planned'|'approved'|'remaining')=>employees.reduce((s,e)=>{for(const k of BENEFITS){s[k]+=e[field]?.[k]??0;if(!Number.isSafeInteger(s[k]))throw new Error('Invalid contribution total');}return s;},{sss:0,philhealth:0,pagibig:0});
  const totals={planned:sum('planned'),approved:sum('approved'),remaining:sum('remaining'),unconfigured:employees.filter(e=>!e.planned).length,legacyWeeks:employees.reduce((s,e)=>s+e.legacyWeeks,0)};
  const allocations:ContributionReportAllocation[]=rows.map(r=>({code:r.code,name:r.full_name,period:r.period_start,payday:r.payday,benefitMonth:r.benefit_month,classification:r.classification,amounts:{sss:r.sss,philhealth:r.philhealth,pagibig:r.pagibig}}));
- return {employees,allocations,totals};
+ // "Paid" = included in approved (locked) payroll; agency remittance is not tracked here.
+ const monthTotal=allocations.reduce((n,a)=>{for(const k of BENEFITS){n+=a.amounts[k];}if(!Number.isSafeInteger(n))throw new Error('Invalid contribution total');return n;},0);
+ const [all]=await tx`select count(*)::int as count,coalesce(sum(c.sss+c.philhealth+c.pagibig),0)::bigint as total from payroll_contributions c join payroll_runs r on r.id=c.run_id where r.status='locked'`;
+ const paid={month:{count:allocations.length,total:monthTotal},allTime:{count:all.count as number,total:all.total as number}};
+ return {employees,allocations,totals,paid};
 }
