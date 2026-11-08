@@ -118,7 +118,21 @@ No cap on deductions. `carry_out` becomes the next period's `carried_in`.
 
 ## J. Out of scope (per PRD)
 
-Government contributions (SSS, PhilHealth, Pag-IBIG) and withholding tax — handled by the accountant/third party. The system only exports monthly totals per employee (by payday month, PR-011).
+Withholding tax and statutory contribution-rate determination remain handled by the accountant/third party. The employer-funded manual allocation feature below records supplied values; it does not compute statutory rates or confirm remittance.
+
+## K. Employer-funded contribution allocations (Owner, 2026-10-11)
+
+**PR-090** Manually entered monthly SSS, PhilHealth and Pag-IBIG are entirely employer-funded and excluded from basic/base/gross/deductions/net/carry-over/13th-month/payment balances. Recording starts November 2026; old approvals are not backfilled.
+
+**PR-091** Amounts recur until changed. Changes start next month; pending initial future-hire amounts can be corrected before they become effective. Administrator writes only.
+
+**PR-092** Divide monthly centavos across the month's Sunday paydays; distribute remainder centavos to the earliest Sundays, conserving the exact monthly amount. Ordinary benefit attribution follows scheduled payday, including overlapping weeks.
+
+**PR-093** Hire on days 1–5 qualifies for the full joining month; later hires start next month. Missed early Sunday allocations appear on the first eligible payroll. Attendance does not prorate contributions.
+
+**PR-094** A departing employee receives the remaining full monthly allocation on final payroll. A next-month payday retains the departure benefit month. Reports group by benefit month; payslips select complete weeks by payday and show settlement month labels.
+
+**PR-095** Approval freezes amounts and employee-level coverage. Unknown/legacy data differs from configured zero. Payslip snapshots copy saved values. Reopen archives contributions and removes that run from approved totals. Later-approved allocations prevent duplicate historical catch-up/backfill.
 
 ## Legal questions for a human
 

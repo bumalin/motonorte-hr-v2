@@ -1,6 +1,12 @@
 # Runbook — Motonorte Payroll (VPS / web server)
 
+Employer government contribution settings, verification and app-only recovery are documented in `docs/EMPLOYER-CONTRIBUTIONS-2026-10-11.md`. Ordinary `npm test` is now database-free; database tests require explicit disposable credentials. Employer values never alter payroll net pay.
+
 **Current plan:** Stage 1 on the office PC → `docs/runbook-office.md`. This file is Stage 2 (your VPS).
+
+**Day-to-day:** pushing changes, updating the VPS, backups and restores → `docs/runbook-git-vps.md`.
+Note: `db/tests/verify.sql` (§5, §6 below) needs the synthetic seed data and fails on real payroll data; check real
+restores with `db/tests/fingerprints.sql` as in `docs/runbook-git-vps.md` §5–§6.
 
 Operations guide for the VPS / web server (Stage 2). Architecture: `docs/03-architecture.md` §1, §9, §10.
 
