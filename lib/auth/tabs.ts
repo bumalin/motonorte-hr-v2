@@ -7,6 +7,7 @@ export const TABS = [
   { key: "payroll", label: "Payroll", match: "/payroll" },
   { key: "catalog", label: "Incentive jobs", match: "/catalog" },
   { key: "reports", label: "Reports", match: "/reports" },
+  { key: "contributions", label: "Gov't contributions", match: "/contributions" },
   { key: "settings", label: "Settings", match: "/settings" },
   { key: "team", label: "Team members", match: "/team" },
   { key: "audit", label: "Audit log", match: "/audit" },

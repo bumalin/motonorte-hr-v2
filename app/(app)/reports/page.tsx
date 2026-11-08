@@ -33,7 +33,6 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
   return (
     <div className="space-y-10">
       <h1 className="text-2xl font-semibold">Reports</h1>
-      <a href="/reports/contributions" className="inline-block font-medium text-brand-700 underline">Employer government contributions report →</a>
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-end gap-3">

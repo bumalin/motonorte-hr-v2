@@ -12,7 +12,7 @@ const PERSONAL=["profile","mypay","payslips"];
 // "requests" is owner-only in hasTab(), so it is never offered to staff.
 const OFFICE=TABS.filter(t=>!PERSONAL.includes(t.key)&&t.key!=="requests");
 const CREW=TABS.filter(t=>PERSONAL.includes(t.key));
-const HINTS:Record<string,string>={team:"Staff see own account only",payroll:"Final approval stays admin",week:"Attendance edits stay admin",mypay:"Own pay history",profile:"Own details",payslips:"Request PDF copies"};
+const HINTS:Record<string,string>={team:"Staff see own account only",payroll:"Final approval stays admin",contributions:"SSS, PhilHealth, Pag-IBIG",week:"Attendance edits stay admin",mypay:"Own pay history",profile:"Own details",payslips:"Request PDF copies"};
 const isCrew=(m:Member)=>m.access_kind==="crew";
 const initials=(n:string)=>n.split(" ").filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
 const roleLabel=(m:Member)=>m.role==="owner"?"ADMINISTRATOR":isCrew(m)?"EMPLOYEE":"STAFF";

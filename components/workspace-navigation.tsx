@@ -3,8 +3,8 @@ import Link from "next/link";
 import {usePathname} from "next/navigation";
 import {useEffect,useRef,useState} from "react";
 export type NavigationItem={key:string;href:string;match:string;label:string};
-const symbol:Record<string,string>={dashboard:"⌂",week:"▦",employees:"♙",payroll:"₱",catalog:"◇",reports:"▤",settings:"⚙",team:"♧",audit:"↺"};
-export function WorkspaceTrail(){const p=usePathname();const titles:Record<string,string>={week:"This week",employees:"Employees",payroll:"Payroll",catalog:"Incentive jobs",reports:"Reports",settings:"Settings",team:"Team members",audit:"Audit log",account:"Your account"};return <div className="workspace-trail"><span>HR &amp; Payroll</span><span aria-hidden="true">/</span><strong>{titles[p.split("/")[1]]||"Dashboard"}</strong></div>}
+const symbol:Record<string,string>={dashboard:"⌂",week:"▦",employees:"♙",payroll:"₱",catalog:"◇",reports:"▤",contributions:"▥",settings:"⚙",team:"♧",audit:"↺"};
+export function WorkspaceTrail(){const p=usePathname();const titles:Record<string,string>={week:"This week",employees:"Employees",payroll:"Payroll",catalog:"Incentive jobs",reports:"Reports",contributions:"Gov't contributions",settings:"Settings",team:"Team members",audit:"Audit log",account:"Your account"};return <div className="workspace-trail"><span>HR &amp; Payroll</span><span aria-hidden="true">/</span><strong>{titles[p.split("/")[1]]||"Dashboard"}</strong></div>}
 export function MobileNavigation({nav}:{nav:NavigationItem[]}){
  const p=usePathname(),dialog=useRef<HTMLDialogElement>(null);const [open,setOpen]=useState(false);
  const primary=nav.filter(n=>["dashboard","week","employees","payroll"].includes(n.key));const extra=nav.filter(n=>!["dashboard","week","employees","payroll"].includes(n.key));

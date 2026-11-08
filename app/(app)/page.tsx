@@ -1,7 +1,4 @@
 import Link from "next/link";
-import {contributionReport} from '@/lib/contributions/reports.ts';
-import {ContributionBudget} from '@/components/contribution-budget.tsx';
-import {validMonth} from '@/lib/db/reports.ts';
 import { requireTab } from "@/lib/auth/session.ts";
 import { withUser } from "@/lib/db/client.ts";
 import { hasTab } from "@/lib/auth/tabs.ts";
@@ -35,9 +32,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
   const user = await requireTab("dashboard");
   const sp = await searchParams;
   const thisWeek = periodStartOf(todayManila());
-  const benefitMonth=typeof sp.benefitMonth==='string'&&validMonth(sp.benefitMonth)?sp.benefitMonth:todayManila().slice(0,7);
   const data = await withUser(user.id, async (tx) => {
-    const benefitBudget = await contributionReport(tx, benefitMonth + '-01');
     const thisStatus = (await tx<{ status: string }[]>`select status from payroll_runs where period_start = ${thisWeek}`)[0]?.status ?? "open";
     const weeks = await tx<WeekTotals[]>`
       select r.period_start::text, sum(l.base)::bigint as base, sum(l.ot)::bigint as ot, sum(l.incentive)::bigint as incentive, sum(l.net)::bigint as net
@@ -45,7 +40,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
       where r.status = 'locked' group by r.period_start order by r.period_start desc limit 12`;
     const all = (await payrollTotals(tx, null, null)).reduce((t, r) => ({ incentive: t.incentive + r.incentive, net: t.net + r.net }), { incentive: 0, net: 0 });
     const chosen = typeof sp.week === "string" && weeks.some((w) => w.period_start === sp.week) ? sp.week : weeks[0]?.period_start;
-    if (!chosen) return { weeks, chosen: null, thisStatus, all, benefitBudget };
+    if (!chosen) return { weeks, chosen: null, thisStatus, all };
     const prev = weeks[weeks.findIndex((w) => w.period_start === chosen) + 1]?.period_start ?? null;
     const kpi = async (start: string | null): Promise<Kpi | null> => {
       if (!start) return null;
@@ -68,7 +63,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
         sum(l.qty * (select a.amount from catalog_amounts a where a.job_id = j.id and a.effective_from <= l.date order by a.effective_from desc limit 1))::bigint as amount
       from job_log l join catalog_jobs j on j.id = l.job_id
       where l.date between ${chosen} and ${chosen}::date + 6 group by j.id order by amount desc limit 5`;
-    return { weeks, chosen, thisStatus, all, benefitBudget, cur: await kpi(chosen), prev: await kpi(prev), mechanics, topJobs };
+    return { weeks, chosen, thisStatus, all, cur: await kpi(chosen), prev: await kpi(prev), mechanics, topJobs };
   });
 
   const peso = (n: number) => formatMoney(Math.round(n / 100) * 100).replace(/\.00$/, ""); // whole pesos, rounded
@@ -88,7 +83,6 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
         )}
       </div>
       <ApprovalsPanel user={user} />
-      <section className="mb-6 space-y-3 rounded-md border border-border p-4"><h2 className="font-semibold">Employer government contributions</h2><form className="flex flex-wrap items-end gap-3"><label>Benefit month<input type="month" name="benefitMonth" defaultValue={benefitMonth} className="block rounded-md border border-border p-2"/></label>{typeof sp.week==='string'&&<input type="hidden" name="week" value={sp.week}/>}<button className="border border-border p-2 rounded-md">Show</button>{hasTab(user,'reports')&&<Link className="underline" href={`/reports/contributions?month=${benefitMonth}`}>Open contribution report →</Link>}</form>{benefitMonth<'2026-11'&&<p className="text-sm">Recording starts November 2026.</p>}<ContributionBudget data={data.benefitBudget}/></section>
 
       {!data.chosen ? (
         <EmptyState title="No locked payroll yet." action={{ href: `/week/${thisWeek}`, label: "Start with This week →" }} />

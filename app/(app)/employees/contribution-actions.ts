@@ -6,7 +6,7 @@ export async function saveContributions(_:ContributionFormState,form:FormData):P
  const amounts=['sss','philhealth','pagibig'].map(key=>parsePesos(String(form.get(key)??'')));
  if(!id.success||amounts.some(n=>n===null||n>100000000))return {error:'Enter all three monthly amounts, from ₱0 to ₱1,000,000.'};
  try{const [{month}]=await withUser(user.id,tx=>tx`select set_employee_contributions(${id.data},${amounts[0]},${amounts[1]},${amounts[2]})::text as month`);
- for(const p of ['/employees','/','/reports/contributions',`/employees/${id.data}`,'/my-pay'])revalidatePath(p);
+ for(const p of ['/employees','/contributions',`/employees/${id.data}`,'/my-pay'])revalidatePath(p);
  return {ok:`Monthly employer contributions saved, effective ${month}. Existing approved payroll remains unchanged.`};
  }catch(e){return {error:dbErrorMessage(e)};}
 }

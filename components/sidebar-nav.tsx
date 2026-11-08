@@ -5,7 +5,7 @@ import type { NavigationItem } from "./workspace-navigation.tsx";
 
 const GROUPS: { label: string | null; keys: string[] }[] = [
   { label: null, keys: ["dashboard"] },
-  { label: "Payroll", keys: ["week", "payroll", "catalog"] },
+  { label: "Payroll", keys: ["week", "payroll", "catalog", "contributions"] },
   { label: "People", keys: ["employees", "team", "requests"] },
   { label: "Admin", keys: ["reports", "settings", "audit"] },
 ];
@@ -18,6 +18,7 @@ const ICONS: Record<string, React.ReactNode> = {
   employees: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></>,
   team: <><circle cx="9" cy="8" r="3.5" /><path d="M2 20c0-3.6 3-6 7-6s7 2.4 7 6" /><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.4.8 4 2.8 4 5.7" /></>,
   requests: <><path d="M3 13h5l1.5 3h5L16 13h5" /><path d="M5 5h14l2 8v6H3v-6z" /></>,
+  contributions: <><path d="M3 9 12 4l9 5" /><path d="M5 9v9M9.5 9v9M14.5 9v9M19 9v9M3 21h18" /></>,
   reports: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
   settings: <><path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2" /><circle cx="8" cy="17" r="2" /></>,
   audit: <><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></>,

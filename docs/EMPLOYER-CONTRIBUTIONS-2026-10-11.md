@@ -10,7 +10,7 @@ Recording starts November 1, 2026. Existing payroll and approval snapshots are n
 
 Hires on days 1–5 qualify for the full joining month, catching up missed early Sundays on their first payroll; later hires start next month. Departures retain the full eligible month, settled on final payroll. A next-month final payday retains the earlier benefit-month label.
 
-The dashboard and separate `/reports/contributions` report show planned, approved and remaining totals by benefit month, with employee rows, weekly reconciliation and CSV export. Unknown configuration/legacy metadata is distinct from zero. My Pay, weekly print/PDF and monthly PDF summaries use frozen allocations. These amounts do not confirm agency remittance.
+The **Gov't contributions** tab (`/contributions`, its own permission since migration 022) shows planned, approved and remaining totals by benefit month, with employee rows, weekly reconciliation and CSV export. Unknown configuration/legacy metadata is distinct from zero. My Pay, weekly print/PDF and monthly PDF summaries use frozen allocations. These amounts do not confirm agency remittance.
 
 ## Verification
 
@@ -48,10 +48,15 @@ Legacy request approvals without contribution metadata remain supported by an ol
 Full logs and task ledger remain in ignored `backups`. No independent-review minor findings were deferred.
 
 
-## Review fixes (2026-11-08, not yet deployed)
+## Review fixes (2026-11-08, deployed to the office PC 2026-11-08)
 
 - Stale-draft hash: contribution inputs now carry only what can change a week's allocation (the period's employees, the benefit months the week can touch, and prior approvals only for final settlements or later paydays). Locking an unrelated week no longer marks other drafts stale. The SQL validator still checks entitlement against every approval. Deploying this changes the hash shape once, so any open draft must be regenerated after the update.
 - Migration 021: first-time contribution setup also skips a month that already has a submitted week.
 - Contribution database errors now show plain-language messages.
 - Pay history loads contributions in one query; the dashboard uses a single transaction; legacy/unconfigured printed slips omit the contributions block.
 - Verification: typecheck, lint, 73 unit tests, 10 database tests on a disposable `motonorte_integrity_test` (including two new regression tests), production build.
+- Deployed with the Oct 31 sidebar, validation and Next.js 16.4.3 commits (image `motonorte-office-app:sidebar-update-20261108`, commit 40d6608). Backup and restore check: `backups/before-sidebar-update-20261108-203808/` (23 tables matched). Migration 021 applied; no payroll data changed. Rollback image: `motonorte-office-app:before-sidebar-update-20261108`.
+
+## Own tab (2026-11-08, deployed to the office PC 2026-11-08)
+
+Government contributions moved off the dashboard and out of Reports into their own tab, **Gov't contributions** (`/contributions`, sidebar Payroll group, CSV at `/contributions/export`). It is a separate permission: owners always have it; staff need it ticked on Team members. Migration 022 adds the tab key to `users_tabs_check` and gives it once to office users who had Reports, so nobody loses access they had. `/reports/contributions` now returns 404. Per-employee amounts are still set on each employee's "Employer contributions" tab.
